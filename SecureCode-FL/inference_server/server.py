@@ -150,8 +150,9 @@ def load_model():
     
     # Load vectorizer
     vectorizer_paths = [
+        os.path.join(base_path, "models", "tfidf_vectorizer.pkl"),
         os.path.join(base_path, "models", "tfidf_vectorizer.joblib"),
-        os.path.join(base_path, "models", "neural", "tfidf_vectorizer.joblib"),
+        os.path.join(base_path, "models", "neural", "tfidf_vectorizer.pkl"),
     ]
     
     for vec_path in vectorizer_paths:
@@ -387,13 +388,18 @@ def get_vulnerability_types():
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, default=5000, help='Port to run the server on')
+    args = parser.parse_args()
+    
     print("=" * 60)
     print("  SecureCode-FL Inference Server")
     print("=" * 60)
     
     load_model()
     
-    print("\n🚀 Starting server on http://localhost:5000")
+    print(f"\n🚀 Starting server on http://localhost:{args.port}")
     print("📋 Endpoints:")
     print("   GET  /health           - Health check")
     print("   POST /scan             - Scan code for vulnerabilities")
@@ -401,4 +407,4 @@ if __name__ == '__main__':
     print("   GET  /vulnerability-types - Get supported vulnerability types")
     print("=" * 60)
     
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='127.0.0.1', port=args.port, debug=False)
