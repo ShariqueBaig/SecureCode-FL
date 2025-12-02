@@ -1,5 +1,5 @@
 # SecureCode-FL Dependencies
-# Based on thesis: "Code Validation through Machine Learning"
+# Based on thesis: "SecureCode-FL: Federated Learning Framework for Code Vulnerability Detection"
 
 # Core ML Libraries
 pandas>=1.5.0
@@ -7,7 +7,13 @@ numpy>=1.23.0
 scikit-learn>=1.2.0
 scipy>=1.10.0
 
-# XGBoost
+# Deep Learning
+tensorflow>=2.13.0
+
+# Federated Learning (Phase 3)
+flwr>=1.24.0  # Flower framework
+
+# XGBoost (Phase 1)
 xgboost>=1.7.0
 
 # Explainable AI
@@ -25,3 +31,6 @@ joblib>=1.2.0
 
 # Optional: For FLAML AutoML
 # flaml>=2.0.0
+
+# Optional: Differential Privacy (Phase 5)
+# tensorflow-privacy>=0.9.0
