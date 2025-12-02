@@ -26,6 +26,36 @@ export interface ScanResponse {
     model_version: string;
 }
 
+export interface FeedbackData {
+    code_snippet: string;
+    user_label: 'vulnerable' | 'secure';
+    start_line: number;
+    end_line: number;
+    start_column: number;
+    end_column: number;
+    original_detection?: string;
+    severity?: 'high' | 'medium' | 'low';
+    vulnerability_type?: string;
+    notes?: string;
+    file_path: string;
+    language: string;
+}
+
+export interface FeedbackResponse {
+    success: boolean;
+    feedback_id?: number;
+    feedback_type?: string;
+    message?: string;
+    existing_id?: number;
+}
+
+export interface FeedbackStats {
+    total: number;
+    untrained: number;
+    by_type: Record<string, number>;
+    by_label: Record<string, number>;
+}
+
 export class ServerClient {
     private client: AxiosInstance;
     private isFirstRequest: boolean = true;
@@ -104,6 +134,62 @@ export class ServerClient {
                 'Improper Inventory Management',
                 'Unsafe Consumption of APIs'
             ];
+        }
+    }
+
+    /**
+     * Submit user feedback on a vulnerability detection
+     */
+    async submitFeedback(data: FeedbackData): Promise<FeedbackResponse> {
+        try {
+            const response = await this.client.post('/feedback', data);
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 409) {
+                // Feedback already exists
+                return {
+                    success: false,
+                    message: 'Feedback already exists for this code',
+                    existing_id: error.response.data.existing_id
+                };
+            }
+            throw new Error('Failed to submit feedback');
+        }
+    }
+
+    /**
+     * Get feedback statistics
+     */
+    async getFeedbackStats(): Promise<FeedbackStats> {
+        try {
+            const response = await this.client.get('/feedback/stats');
+            return response.data.stats;
+        } catch (error) {
+            throw new Error('Failed to get feedback stats');
+        }
+    }
+
+    /**
+     * Get all feedback entries
+     */
+    async listFeedback(): Promise<any[]> {
+        try {
+            const response = await this.client.get('/feedback/list');
+            return response.data.feedback;
+        } catch (error) {
+            throw new Error('Failed to list feedback');
+        }
+    }
+
+    /**
+     * Delete a feedback entry
+     */
+    async deleteFeedback(feedbackId: number): Promise<boolean> {
+        try {
+            const response = await this.client.delete(`/feedback/${feedbackId}`);
+            return response.data.success;
+        } catch (error) {
+            return false;
         }
     }
 }

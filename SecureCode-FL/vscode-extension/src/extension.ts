@@ -1,6 +1,7 @@
 /**
  * SecureCode-FL VS Code Extension
  * Real-time code vulnerability detection powered by Federated Learning
+ * With User Feedback System for Model Improvement
  */
 
 import * as vscode from 'vscode';
@@ -8,10 +9,12 @@ import { VulnerabilityScanner } from './scanner';
 import { DiagnosticsManager } from './diagnostics';
 import { DashboardPanel } from './dashboard';
 import { ServerClient } from './serverClient';
+import { FeedbackManager, FeedbackCodeActionProvider } from './feedbackManager';
 
 let scanner: VulnerabilityScanner;
 let diagnosticsManager: DiagnosticsManager;
 let serverClient: ServerClient;
+let feedbackManager: FeedbackManager;
 let statusBarItem: vscode.StatusBarItem;
 let realTimeScanningEnabled: boolean = true;
 let scanTimeout: NodeJS.Timeout | undefined;
@@ -23,6 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
     serverClient = new ServerClient();
     diagnosticsManager = new DiagnosticsManager();
     scanner = new VulnerabilityScanner(serverClient, diagnosticsManager);
+    feedbackManager = new FeedbackManager(serverClient);
 
     // Create status bar item
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -37,11 +41,26 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('securecode-fl.scanFile', () => scanCurrentFile()),
         vscode.commands.registerCommand('securecode-fl.scanWorkspace', () => scanWorkspace()),
         vscode.commands.registerCommand('securecode-fl.toggleRealTime', () => toggleRealTimeScanning()),
-        vscode.commands.registerCommand('securecode-fl.showDashboard', () => DashboardPanel.createOrShow(context.extensionUri))
+        vscode.commands.registerCommand('securecode-fl.showDashboard', () => DashboardPanel.createOrShow(context.extensionUri)),
+        // Feedback commands
+        vscode.commands.registerCommand('securecode-fl.markFalsePositive', () => feedbackManager.markAsFalsePositive()),
+        vscode.commands.registerCommand('securecode-fl.markVulnerable', () => feedbackManager.markAsVulnerable()),
+        vscode.commands.registerCommand('securecode-fl.confirmVulnerability', () => feedbackManager.confirmVulnerability()),
+        vscode.commands.registerCommand('securecode-fl.showFeedbackStats', () => feedbackManager.showFeedbackStats())
     );
 
     // Register diagnostics collection
     context.subscriptions.push(diagnosticsManager.diagnosticCollection);
+
+    // Register code action provider for quick fixes
+    const codeActionProvider = new FeedbackCodeActionProvider(feedbackManager);
+    context.subscriptions.push(
+        vscode.languages.registerCodeActionsProvider(
+            ['python', 'javascript', 'typescript', 'java', 'csharp', 'php'],
+            codeActionProvider,
+            { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] }
+        )
+    );
 
     // Real-time scanning on document change
     context.subscriptions.push(

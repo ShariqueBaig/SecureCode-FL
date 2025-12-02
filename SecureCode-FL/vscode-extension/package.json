@@ -46,6 +46,22 @@
       {
         "command": "securecode-fl.showDashboard",
         "title": "SecureCode-FL: Show Vulnerability Dashboard"
+      },
+      {
+        "command": "securecode-fl.markFalsePositive",
+        "title": "SecureCode-FL: Mark Selection as False Positive"
+      },
+      {
+        "command": "securecode-fl.markVulnerable",
+        "title": "SecureCode-FL: Mark Selection as Vulnerable"
+      },
+      {
+        "command": "securecode-fl.confirmVulnerability",
+        "title": "SecureCode-FL: Confirm Vulnerability at Cursor"
+      },
+      {
+        "command": "securecode-fl.showFeedbackStats",
+        "title": "SecureCode-FL: Show Feedback Statistics"
       }
     ],
     "configuration": {
@@ -82,7 +98,28 @@
       "editor/context": [
         {
           "command": "securecode-fl.scanFile",
-          "group": "securecode-fl"
+          "group": "securecode-fl@1",
+          "when": "editorLangId in securecode-fl.supportedLanguages"
+        },
+        {
+          "command": "securecode-fl.markFalsePositive",
+          "group": "securecode-fl@2",
+          "when": "editorHasSelection && editorLangId in securecode-fl.supportedLanguages"
+        },
+        {
+          "command": "securecode-fl.markVulnerable",
+          "group": "securecode-fl@3",
+          "when": "editorHasSelection && editorLangId in securecode-fl.supportedLanguages"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "securecode-fl.markFalsePositive",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "securecode-fl.markVulnerable",
+          "when": "editorHasSelection"
         }
       ]
     },

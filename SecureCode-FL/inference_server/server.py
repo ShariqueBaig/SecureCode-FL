@@ -1,6 +1,7 @@
 """
 SecureCode-FL Inference Server
 Flask-based REST API for vulnerability detection
+With User Feedback System for Model Improvement
 """
 
 from flask import Flask, request, jsonify
@@ -11,7 +12,19 @@ import joblib
 import os
 import time
 import re
-from typing import List, Dict, Any
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+try:
+    from feedback import (
+        FeedbackDatabase, UserFeedback, FeedbackType,
+        compute_code_hash, get_feedback_db
+    )
+except ImportError:
+    from inference_server.feedback import (
+        FeedbackDatabase, UserFeedback, FeedbackType,
+        compute_code_hash, get_feedback_db
+    )
 
 app = Flask(__name__)
 CORS(app)
@@ -387,6 +400,269 @@ def get_vulnerability_types():
     })
 
 
+# ============================================================================
+# USER FEEDBACK API ENDPOINTS
+# ============================================================================
+
+@app.route('/feedback', methods=['POST'])
+def submit_feedback():
+    """
+    Submit user feedback on a vulnerability detection.
+    
+    This allows users to:
+    - Mark false positives (incorrectly flagged as vulnerable)
+    - Report missed vulnerabilities (code that should be flagged)
+    - Confirm detections (agree with the system)
+    
+    The feedback is stored locally and used for model improvement via FL.
+    """
+    data = request.get_json()
+    
+    # Validate required fields
+    required_fields = ['code_snippet', 'user_label', 'file_path', 'language']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+    
+    try:
+        db = get_feedback_db()
+        
+        # Compute code hash for deduplication
+        code_hash = compute_code_hash(data['code_snippet'])
+        
+        # Check if feedback already exists for this code
+        existing = db.check_existing(code_hash)
+        if existing:
+            return jsonify({
+                "success": False,
+                "message": "Feedback already exists for this code snippet",
+                "existing_id": existing.id
+            }), 409
+        
+        # Determine feedback type
+        if data['user_label'] == 'secure' and data.get('original_detection'):
+            feedback_type = FeedbackType.FALSE_POSITIVE.value
+        elif data['user_label'] == 'vulnerable' and not data.get('original_detection'):
+            feedback_type = FeedbackType.MISSED_VULNERABILITY.value
+        elif data['user_label'] == 'vulnerable':
+            feedback_type = FeedbackType.CONFIRMED_VULNERABLE.value
+        else:
+            feedback_type = FeedbackType.CONFIRMED_SECURE.value
+        
+        # Create feedback entry
+        feedback = UserFeedback(
+            id=None,
+            timestamp=datetime.now().isoformat(),
+            feedback_type=feedback_type,
+            code_snippet=data['code_snippet'],
+            code_hash=code_hash,
+            start_line=data.get('start_line', 1),
+            end_line=data.get('end_line', 1),
+            start_column=data.get('start_column', 0),
+            end_column=data.get('end_column', 0),
+            original_detection=data.get('original_detection'),
+            user_label=data['user_label'],
+            severity=data.get('severity'),
+            vulnerability_type=data.get('vulnerability_type'),
+            notes=data.get('notes'),
+            file_path=data['file_path'],
+            language=data['language']
+        )
+        
+        feedback_id = db.add_feedback(feedback)
+        
+        return jsonify({
+            "success": True,
+            "feedback_id": feedback_id,
+            "feedback_type": feedback_type,
+            "message": "Feedback submitted successfully. Thank you for helping improve the model!"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/feedback/stats', methods=['GET'])
+def get_feedback_stats():
+    """Get statistics about collected feedback."""
+    try:
+        db = get_feedback_db()
+        stats = db.get_stats()
+        
+        return jsonify({
+            "success": True,
+            "stats": stats
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/feedback/list', methods=['GET'])
+def list_feedback():
+    """List all feedback entries (for review)."""
+    try:
+        db = get_feedback_db()
+        all_feedback = db.get_all_feedback()
+        
+        # Convert to dict format
+        feedback_list = []
+        for fb in all_feedback[:100]:  # Limit to 100 entries
+            feedback_list.append({
+                "id": fb.id,
+                "timestamp": fb.timestamp,
+                "feedback_type": fb.feedback_type,
+                "user_label": fb.user_label,
+                "vulnerability_type": fb.vulnerability_type,
+                "severity": fb.severity,
+                "file_path": fb.file_path,
+                "trained": fb.trained,
+                "code_preview": fb.code_snippet[:100] + "..." if len(fb.code_snippet) > 100 else fb.code_snippet
+            })
+        
+        return jsonify({
+            "success": True,
+            "count": len(all_feedback),
+            "feedback": feedback_list
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/feedback/untrained', methods=['GET'])
+def get_untrained_feedback():
+    """Get feedback entries that haven't been used for training yet."""
+    try:
+        db = get_feedback_db()
+        untrained = db.get_untrained_feedback()
+        
+        # Convert to training format
+        training_data = []
+        for fb in untrained:
+            training_data.append({
+                "id": fb.id,
+                "code": fb.code_snippet,
+                "label": 0 if fb.user_label == "vulnerable" else 1,  # 0=vulnerable, 1=secure
+                "feedback_type": fb.feedback_type,
+                "language": fb.language
+            })
+        
+        return jsonify({
+            "success": True,
+            "count": len(training_data),
+            "training_data": training_data
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/feedback/mark-trained', methods=['POST'])
+def mark_feedback_trained():
+    """Mark feedback entries as used for training."""
+    data = request.get_json()
+    
+    if 'feedback_ids' not in data:
+        return jsonify({"error": "Missing feedback_ids"}), 400
+    
+    try:
+        db = get_feedback_db()
+        db.mark_as_trained(data['feedback_ids'])
+        
+        return jsonify({
+            "success": True,
+            "message": f"Marked {len(data['feedback_ids'])} entries as trained"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/feedback/<int:feedback_id>', methods=['DELETE'])
+def delete_feedback(feedback_id: int):
+    """Delete a feedback entry."""
+    try:
+        db = get_feedback_db()
+        deleted = db.delete_feedback(feedback_id)
+        
+        if deleted:
+            return jsonify({
+                "success": True,
+                "message": f"Feedback #{feedback_id} deleted"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Feedback not found"
+            }), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/feedback/train', methods=['POST'])
+def train_on_feedback():
+    """
+    Train the model on accumulated user feedback.
+    
+    This triggers local training on all untrained feedback entries.
+    The model weights are updated and can then be shared via FL.
+    """
+    global model
+    
+    try:
+        # Import the feedback trainer
+        import sys
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.append(os.path.join(base_path, "federated"))
+        
+        from fl_feedback_client import FeedbackTrainer
+        
+        # Get optional parameters
+        data = request.get_json() or {}
+        epochs = data.get('epochs', 5)
+        
+        # Create trainer and run training
+        trainer = FeedbackTrainer()
+        result = trainer.train_on_feedback(epochs=epochs, save_model=True)
+        
+        if result['status'] == 'success':
+            # Reload the updated model
+            load_model()
+            
+            return jsonify({
+                "success": True,
+                "message": "Model trained on user feedback",
+                "samples_trained": result['samples_trained'],
+                "final_accuracy": result['final_accuracy'],
+                "final_loss": result['final_loss']
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": result.get('message', 'Training failed'),
+                "status": result['status']
+            })
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/model/reload', methods=['POST'])
+def reload_model():
+    """Reload the model from disk (after external training)."""
+    global model, vectorizer
+    
+    try:
+        load_model()
+        return jsonify({
+            "success": True,
+            "message": "Model reloaded successfully",
+            "model_loaded": model is not None,
+            "vectorizer_loaded": vectorizer is not None
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -395,9 +671,15 @@ if __name__ == '__main__':
     
     print("=" * 60)
     print("  SecureCode-FL Inference Server")
+    print("  With User Feedback System")
     print("=" * 60)
     
     load_model()
+    
+    # Initialize feedback database
+    feedback_db = get_feedback_db()
+    stats = feedback_db.get_stats()
+    print(f"📊 Feedback DB: {stats['total']} entries, {stats['untrained']} untrained")
     
     print(f"\n🚀 Starting server on http://localhost:{args.port}")
     print("📋 Endpoints:")
@@ -405,6 +687,13 @@ if __name__ == '__main__':
     print("   POST /scan             - Scan code for vulnerabilities")
     print("   GET  /model/info       - Get model information")
     print("   GET  /vulnerability-types - Get supported vulnerability types")
+    print("   POST /feedback         - Submit user feedback")
+    print("   GET  /feedback/stats   - Get feedback statistics")
+    print("   GET  /feedback/list    - List all feedback")
+    print("   GET  /feedback/untrained - Get untrained feedback for FL")
+    print("   POST /feedback/mark-trained - Mark feedback as trained")
+    print("   POST /feedback/train   - Train model on feedback")
+    print("   POST /model/reload     - Reload model from disk")
     print("=" * 60)
     
     app.run(host='127.0.0.1', port=args.port, debug=False)
