@@ -28,13 +28,14 @@ export interface ScanResponse {
 
 export class ServerClient {
     private client: AxiosInstance;
+    private isFirstRequest: boolean = true;
 
     constructor() {
         const serverUrl = vscode.workspace.getConfiguration('securecode-fl').get('serverUrl', 'http://localhost:5000');
         
         this.client = axios.create({
             baseURL: serverUrl,
-            timeout: 30000,
+            timeout: 60000, // Increased to 60 seconds for ML model inference
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -43,7 +44,7 @@ export class ServerClient {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await this.client.get('/health');
+            const response = await this.client.get('/health', { timeout: 10000 });
             return response.status === 200;
         } catch (error) {
             return false;
@@ -52,16 +53,23 @@ export class ServerClient {
 
     async scanCode(code: string, language: string, filename: string): Promise<ScanResponse> {
         try {
+            // First request may take longer due to TensorFlow initialization
+            const timeout = this.isFirstRequest ? 90000 : 60000;
+            this.isFirstRequest = false;
+            
             const response = await this.client.post('/scan', {
                 code: code,
                 language: language,
                 filename: filename
-            });
+            }, { timeout });
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 if (error.code === 'ECONNREFUSED') {
                     throw new Error('Cannot connect to SecureCode-FL server. Please ensure the server is running.');
+                }
+                if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+                    throw new Error('Server timeout - ML model may still be loading. Please try again.');
                 }
                 throw new Error(`Server error: ${error.message}`);
             }
