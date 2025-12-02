@@ -119,10 +119,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ShariqueBaig/SecureCode-FL"
-  },
-  "icon": "images/icon.png",
-  "galleryBanner": {
-    "color": "#1e1e1e",
-    "theme": "dark"
   }
 }

@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code Extension
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/*.vsix
+vscode-extension/.vscode-test/
+
+# TensorFlow
+*.h5
+*.keras
+!models/**/*.keras
+
+# Large files (keep model files in models/)
+*.pkl
+*.joblib
+!models/**/*.joblib
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.bak
