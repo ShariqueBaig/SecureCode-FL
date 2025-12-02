@@ -1,0 +1,5143 @@
+S.No,Primary Vulnerability,Exploit,Result,Code
+1,Broken Object Level Authorization,Unfiltered Resource Access,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+users = [
+    {""id"": 1, ""user_id"": 1, ""data"": ""User 1 private""},
+    {""id"": 2, ""user_id"": 2, ""data"": ""User 2 private""}
+]
+
+@app.route('/api/user', methods=['GET'])
+def list_documents():
+    return jsonify(users)
+
+if __name__ == '__main__':
+    app.run()"
+2,Security Misconfiguration,Default Secret Key,Error,"from flask import Flask, session
+app = Flask(__name__)
+app.secret_key = 'secret'
+
+@app.route('/login')
+def login():
+    session['user'] = 'admin'
+    return ""Logged in""
+
+if __name__ == '__main__':
+    app.run()"
+3,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+app = Flask(__name__)
+
+ALLOWED_HOSTS = ['api.trusted.com', 'cdn.example.com']
+
+def is_safe_url(url):
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            return False
+        if parsed.hostname not in ALLOWED_HOSTS:
+            return False
+        if parsed.port and parsed.port not in [80, 443]:
+            return False
+        return True
+    except:
+        return False
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    
+    if not is_safe_url(url):
+        return jsonify({{""error"": ""URL not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+4,Broken Authentication,Insecure Session Management,Good,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'  # Ensure this is kept secret and secure
+
+# User data for demonstration purposes
+users = {
+    'user1': 'password1',
+    'user2': 'password2'
+}
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    if username in users and users[username] == password:
+        session['user'] = username
+        return jsonify({""message"": ""Login successful!""}), 200
+    else:
+        return jsonify({""message"": ""Invalid credentials""}), 401
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user', None)
+    return jsonify({""message"": ""Logout successful!""}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+5,Unrestricted Resource Consumption,Missing Pagination,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/items', methods=['GET'])
+def get_all_items():
+    items = database.get_all_items()
+    return jsonify(items)
+
+if __name__ == '__main__':
+    app.run()"
+6,Broken Object Property Level Authorization,Unvalidated Property Update,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+products = {{1: {{""name"": ""Item"", ""price"": 100, ""discount"": 0}}}}
+
+@app.route('/product/<int:id>', methods=['PATCH'])
+def update_product(id):
+    for key, value in request.json.items():
+        products[id][key] = value
+    return jsonify(products[id])
+
+if __name__ == '__main__':
+    app.run()"
+7,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+from marshmallow import Schema, fields, ValidationError
+app = Flask(__name__)
+
+class UserSchema(Schema):
+    username = fields.Str(required=True, validate=lambda x: len(x) <= 50)
+    email = fields.Email(required=True)
+    
+user_schema = UserSchema()
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    try:
+        response = requests.get(
+            f'https://external-api.com/users/{{username}}',
+            timeout=5,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        user_data = user_schema.load(response.json())
+        database.save_user_safe(user_data)
+        return jsonify(user_data)
+    except ValidationError as e:
+        return jsonify({{""error"": ""Invalid data from external API""}}), 400
+    except requests.RequestException as e:
+        return jsonify({{""error"": ""External API error""}}), 502
+
+if __name__ == '__main__':
+    app.run()"
+8,Broken Authentication,Token Exposure in URL,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/data')
+def get_data():
+    token = request.args.get('token')
+    if validate_token(token):
+        return jsonify({{""data"": ""sensitive info""}})
+    return jsonify({{""error"": ""Invalid token""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+9,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_permission(permission):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or permission not in user.get('permissions', []):
+                return jsonify({{""error"": ""Permission denied""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/api/settings', methods=['PUT'])
+@require_permission('settings:write')
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+10,Broken Function Level Authorization,Insecure Direct Object References,Good,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# Simulating a user database
+users = {
+    'user1': {'username': 'user1', 'password': 'password1', 'role': 'user'},
+    'admin': {'username': 'admin', 'password': 'adminpass', 'role': 'admin'}
+}
+
+# Simulated login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    user = users.get(username)
+    if user and user['password'] == password:
+        session['username'] = username
+        session['role'] = user['role']
+        return jsonify({'message': 'Logged in successfully!'})
+    return jsonify({'message': 'Invalid credentials!'}), 401
+
+# Secure endpoint restricted to administrators based on session role
+@app.route('/admin/get_all_users', methods=['GET'])
+def get_all_users():
+    # Check if the user is logged in and has the 'admin' role
+    if session.get('role') == 'admin':
+        return jsonify({'users': list(users.keys())})
+    return jsonify({'message': 'Unauthorized!'}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+11,Unsafe Consumption of APIs,No HTTPS Verification,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/external-data')
+def get_external():
+    response = requests.get('http://api.example.com/data', verify=False)
+    return jsonify(response.json())
+
+if __name__ == '__main__':
+    app.run()"
+12,Improper Inventory Management,Lack of Input Validation,Good,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+inventory = {
+    'item1': 100,
+    'item2': 50,
+    'item3': 75
+}
+
+@app.route('/update_inventory', methods=['POST'])
+def update_inventory():
+    data = request.get_json()
+
+    item_name = data.get('item_name')
+    quantity = data.get('quantity')
+
+    if item_name and quantity is not None:
+        # Validate that quantity is a non-negative integer
+        if not isinstance(quantity, int) or quantity < 0:
+            return jsonify({'error': 'Invalid quantity. It must be a non-negative integer.'}), 400
+
+        if item_name in inventory:
+            inventory[item_name] += quantity
+            return jsonify({'message': 'Inventory updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Item not found in inventory'}), 404
+    else:
+        return jsonify({'error': 'Invalid input data'}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+13,Security Misconfiguration,Missing Security Headers,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/api/data')
+def get_data():
+    response = jsonify({{""data"": ""sensitive""}})
+    return response
+
+if __name__ == '__main__':
+    app.run()"
+14,Unrestricted Resource Consumption,Unrestricted Loop in a Route,Error,"from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/compute')
+def compute():
+    iterations = int(request.args.get('iterations', '1000'))  # default to 1000 if not provided
+    result = 0
+    for i in range(iterations):
+        result += i * i
+    return f""Computed sum of squares: {result}""
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+15,Unsafe Consumption of APIs,Trusting External Data,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/product/<id>')
+def get_product(id):
+    response = requests.get(f'https://partner-api.com/products/{{id}}')
+    product = response.json()
+    
+    # Directly using external data in SQL
+    database.execute(f""INSERT INTO products VALUES ('{{product['name']}}', {{product['price']}})"")
+    return jsonify(product)
+
+if __name__ == '__main__':
+    app.run()"
+16,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        user = verify_token(token)
+        if not user or user.get('role') != 'admin':
+            return jsonify({{""error"": ""Admin access required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+17,Unrestricted Access to Sensitive Business Flows,Sensitive Financial Operations Accessible Without Authentication,Good,"from flask import Flask, request, jsonify, abort
+
+app = Flask(__name__)
+
+# Simulated token for authentication
+AUTH_TOKEN = 'your_secret_token_here'
+
+def authenticate():
+    token = request.headers.get('Authorization')
+    if token != f'Bearer {AUTH_TOKEN}':
+        abort(403)  # Forbidden
+
+@app.route('/transfer', methods=['POST'])
+def transfer():
+    authenticate()
+    
+    data = request.json
+    from_account = data.get('from_account')
+    to_account = data.get('to_account')
+    amount = data.get('amount')
+
+    # Basic validation
+    if not from_account or not to_account or not amount:
+        return jsonify({
+            'status': 'error',
+            'message': 'Missing required fields'
+        }), 400
+    
+    try:
+        amount = float(amount)  # Ensure amount is a number
+    except ValueError:
+        return jsonify({
+            'status': 'error',
+            'message': 'Invalid amount'
+        }), 400
+
+    # Simulate a transfer operation
+    return jsonify({
+        'status': 'success',
+        'message': f'Transferred {amount} from {from_account} to {to_account}'
+    }), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+18,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+ALLOWED_UPDATE_FIELDS = ['name', 'email']
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user""}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id not in users:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    update_data = {{k: v for k, v in request.json.items() if k in ALLOWED_UPDATE_FIELDS}}
+    users[user_id].update(update_data)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+19,Unsafe Consumption of APIs,No HTTPS Verification,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/external-data')
+def get_external():
+    response = requests.get('http://api.example.com/data', verify=False)
+    return jsonify(response.json())
+
+if __name__ == '__main__':
+    app.run()"
+20,Server Side Request Forgery,Basic SSRF Vulnerability,Error,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/fetch')
+def fetch():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    try:
+        response = requests.get(url)
+        return jsonify({'content': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+21,Unsafe Consumption of APIs,No HTTPS Verification,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/external-data')
+def get_external():
+    response = requests.get('http://api.example.com/data', verify=False)
+    return jsonify(response.json())
+
+if __name__ == '__main__':
+    app.run()"
+22,Broken Authentication,Missing Rate Limiting,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# User data for demonstration purposes
+users = {
+    'user1': 'password1',
+    'user2': 'password2'
+}
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
+
+    if username in users and users[username] == password:
+        return jsonify({""message"": ""Login successful!""}), 200
+    else:
+        return jsonify({""message"": ""Invalid credentials""}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+23,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+
+users_db = {}
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if len(password) < 12:
+        return jsonify({{""error"": ""Password must be at least 12 characters""}}), 400
+    
+    hashed = generate_password_hash(password)
+    users_db[username] = hashed
+    return jsonify({{""success"": True}})
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    stored_hash = users_db.get(username)
+    if stored_hash and check_password_hash(stored_hash, password):
+        token = generate_secure_token(username)
+        return jsonify({{""token"": token}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+24,Unrestricted Access to Sensitive Business Flows,Unrestricted Data Export,Error,"from flask import Flask, request, send_file
+app = Flask(__name__)
+
+@app.route('/export', methods=['GET'])
+def export_data():
+    format = request.args.get('format', 'csv')
+    data = database.export_all_data()
+    return send_file(create_export(data, format))
+
+if __name__ == '__main__':
+    app.run()"
+25,Improper Inventory Management,Exposed Internal Endpoints,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/internal/users')
+def internal_users():
+    return jsonify(database.get_all_internal_users())
+
+@app.route('/api/v2/users')
+def v2_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/beta/experimental')
+def beta_endpoint():
+    return jsonify({{""data"": ""experimental feature""}})
+
+if __name__ == '__main__':
+    app.run()"
+26,Server Side Request Forgery,Basic SSRF Vulnerability,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+
+app = Flask(__name__)
+
+# List of allowed domains
+ALLOWED_DOMAINS = ['example.com', 'another-allowed-domain.com']
+
+def is_url_allowed(url):
+    try:
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc
+        return any(domain.endswith(allowed_domain) for allowed_domain in ALLOWED_DOMAINS)
+    except Exception:
+        return False
+
+@app.route('/fetch')
+def fetch():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    if not is_url_allowed(url):
+        return jsonify({'error': 'URL is not allowed'}), 400
+    
+    try:
+        response = requests.get(url)
+        return jsonify({'content': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+27,Broken Authentication,Missing Rate Limiting,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{""admin"": ""secret123"", ""user"": ""pass456""}}
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if users.get(username) == password:
+        return jsonify({{""success"": True, ""token"": generate_token()}})
+    return jsonify({{""error"": ""Invalid""}})
+
+if __name__ == '__main__':
+    app.run()"
+28,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+import ipaddress
+from urllib.parse import urlparse
+import socket
+app = Flask(__name__)
+
+def is_internal_ip(hostname):
+    try:
+        ip = socket.gethostbyname(hostname)
+        ip_obj = ipaddress.ip_address(ip)
+        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+    except:
+        return True
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    parsed = urlparse(url)
+    
+    if is_internal_ip(parsed.hostname):
+        return jsonify({{""error"": ""Internal URLs not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+29,Broken Authentication,Hardcoded Credentials,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+USERNAME = ""admin""
+PASSWORD = ""password123""
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if username == USERNAME and password == PASSWORD:
+        return jsonify({{""token"": ""admin_token_12345""}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+30,Unrestricted Access to Sensitive Business Flows,Sensitive Financial Operations Accessible Without Authentication,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/transfer', methods=['POST'])
+def transfer():
+    from_account = request.json.get('from_account')
+    to_account = request.json.get('to_account')
+    amount = request.json.get('amount')
+
+    # Simulate a transfer operation
+    return jsonify({
+        'status': 'success',
+        'message': f'Transferred {amount} from {from_account} to {to_account}'
+    }), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+31,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        user = verify_token(token)
+        if not user or user.get('role') != 'admin':
+            return jsonify({{""error"": ""Admin access required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+32,Broken Object Level Authorization,Missing Role-Based Access Control,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+profiles = {}
+
+@app.route('/account/<int:id>', methods=['DELETE'])
+def delete_profile(id):
+    if id in profiles:
+        del profiles[id]
+        return jsonify({""success"": ""Deleted""})
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run()"
+33,Broken Object Property Level Authorization,Insecure Direct Object Reference (IDOR),Good,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Dummy data (normally would come from a database)
+users = [
+    {'id': 1, 'username': 'alice', 'role': 'admin'},
+    {'id': 2, 'username': 'bob', 'role': 'user'}
+]
+
+# Dummy current user for demonstration
+# In a real application, you would get this from session or authentication token
+current_user = {'id': 1, 'username': 'alice', 'role': 'admin'}
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    # Assume user_id comes from the request
+    user = next((user for user in users if user['id'] == user_id), None)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Authorization check: verify if the current user has permission
+    if current_user['role'] != 'admin' and current_user['id'] != user_id:
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    return jsonify({'username': user['username']}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+34,Broken Function Level Authorization,Missing Role Check,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/settings', methods=['PUT'])
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+35,Unrestricted Resource Consumption,Unrestricted Database Query,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q')
+    limit = request.args.get('limit', 1000000)
+    results = database.query(f""SELECT * FROM items WHERE name LIKE '%{{query}}%' LIMIT {{limit}}"")
+    return jsonify(results)
+
+if __name__ == '__main__':
+    app.run()"
+36,Server Side Request Forgery,Basic SSRF,Error,"from flask import Flask, request, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    response = requests.get(url)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+37,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+38,Broken Function Level Authorization,Missing Role Check in URL Routing,Error,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# Simulating a user database
+users = {
+    'user1': {'username': 'user1', 'password': 'password1', 'role': 'user'},
+    'admin': {'username': 'admin', 'password': 'adminpass', 'role': 'admin'}
+}
+
+# Simulated login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    user = users.get(username)
+    if user and user['password'] == password:
+        session['username'] = username
+        session['role'] = user['role']
+        return jsonify({'message': 'Logged in successfully!'})
+    return jsonify({'message': 'Invalid credentials!'}), 401
+
+# No role check on the endpoint
+@app.route('/admin/update_user/<username>', methods=['POST'])
+def update_user(username):
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized!'}), 401
+
+    new_data = request.json
+    if username in users:
+        users[username].update(new_data)
+        return jsonify({'message': f'User {username} updated successfully!'})
+    return jsonify({'message': 'User not found!'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+39,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+40,Server Side Request Forgery,SSRF in Image Processing,Error,"from flask import Flask, request, jsonify
+import requests
+from PIL import Image
+from io import BytesIO
+app = Flask(__name__)
+
+@app.route('/process-image', methods=['POST'])
+def process_image():
+    image_url = request.json.get('image_url')
+    response = requests.get(image_url)
+    img = Image.open(BytesIO(response.content))
+    return jsonify({{""size"": img.size}})
+
+if __name__ == '__main__':
+    app.run()"
+41,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+42,Unrestricted Access to Sensitive Business Flows,Admin Operation Without Verification,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/admin/reset-password', methods=['POST'])
+def reset_password():
+    user_id = request.json['user_id']
+    new_password = request.json['new_password']
+    database.update_password(user_id, new_password)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+43,Unrestricted Resource Consumption,Unrestricted Database Query,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q')
+    limit = request.args.get('limit', 1000000)
+    results = database.query(f""SELECT * FROM items WHERE name LIKE '%{{query}}%' LIMIT {{limit}}"")
+    return jsonify(results)
+
+if __name__ == '__main__':
+    app.run()"
+44,Broken Object Level Authorization,Lack of Ownership Verification,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {1: {""name"": ""Alice"", ""email"": ""alice@example.com"", ""balance"": 5000},
+              2: {""name"": ""Bob"", ""email"": ""bob@example.com"", ""balance"": 3000}}
+
+@app.route('/profile/<int:id>', methods=['GET'])
+def get_user(id):
+    user = users.get(id)
+    if user:
+        return jsonify(user)
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+45,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask, jsonify
+import os
+import logging
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+logging.basicConfig(level=logging.ERROR)
+
+@app.errorhandler(Exception)
+def handle_error(e):
+    logging.error(f""Error: {{e}}"")
+    return jsonify({{""error"": ""An error occurred""}}), 500
+
+@app.route('/user/<int:id>')
+def get_user(id):
+    user = database.get_user(id)
+    return jsonify(user)
+
+if __name__ == '__main__':
+    app.run()"
+46,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+from marshmallow import Schema, fields, ValidationError
+app = Flask(__name__)
+
+class UserSchema(Schema):
+    username = fields.Str(required=True, validate=lambda x: len(x) <= 50)
+    email = fields.Email(required=True)
+    
+user_schema = UserSchema()
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    try:
+        response = requests.get(
+            f'https://external-api.com/users/{{username}}',
+            timeout=5,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        user_data = user_schema.load(response.json())
+        database.save_user_safe(user_data)
+        return jsonify(user_data)
+    except ValidationError as e:
+        return jsonify({{""error"": ""Invalid data from external API""}}), 400
+    except requests.RequestException as e:
+        return jsonify({{""error"": ""External API error""}}), 502
+
+if __name__ == '__main__':
+    app.run()"
+47,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_role(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or user.get('role') != role:
+                return jsonify({{""error"": ""Forbidden""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/admin/users', methods=['GET'])
+@require_role('admin')
+def list_all_users():
+    return jsonify(users)
+
+if __name__ == '__main__':
+    app.run()"
+48,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+SAFE_FIELDS = ['name', 'email', 'created_at']
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc"", ""ssn"": ""123""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = users.get(user_id)
+    if user:
+        safe_user = {{k: v for k, v in user.items() if k in SAFE_FIELDS}}
+        return jsonify(safe_user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+49,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        user = verify_token(token)
+        if not user or user.get('role') != 'admin':
+            return jsonify({{""error"": ""Admin access required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+50,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+51,Unrestricted Access to Sensitive Business Flows,Admin Operation Without Verification,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/admin/reset-password', methods=['POST'])
+def reset_password():
+    user_id = request.json['user_id']
+    new_password = request.json['new_password']
+    database.update_password(user_id, new_password)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+52,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+import os
+app = Flask(__name__)
+
+EXTERNAL_API_KEY = os.environ.get('EXTERNAL_API_KEY')
+TRUSTED_HOSTS = ['api.trusted-partner.com']
+
+@app.route('/external-data')
+def get_external():
+    try:
+        response = requests.get(
+            'https://api.trusted-partner.com/data',
+            headers={{'Authorization': f'Bearer {{EXTERNAL_API_KEY}}'}},
+            timeout=10,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        validated_data = validate_and_sanitize(data)
+        return jsonify(validated_data)
+    except Exception as e:
+        logging.error(f""External API error: {{e}}"")
+        return jsonify({{""error"": ""Service unavailable""}}), 503
+
+if __name__ == '__main__':
+    app.run()"
+53,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+app = Flask(__name__)
+
+ALLOWED_HOSTS = ['api.trusted.com', 'cdn.example.com']
+
+def is_safe_url(url):
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            return False
+        if parsed.hostname not in ALLOWED_HOSTS:
+            return False
+        if parsed.port and parsed.port not in [80, 443]:
+            return False
+        return True
+    except:
+        return False
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    
+    if not is_safe_url(url):
+        return jsonify({{""error"": ""URL not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+54,Unsafe Consumption of APIs,No Input Validation,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    response = requests.get(f'https://external-api.com/users/{{username}}')
+    user_data = response.json()
+    database.save_user(user_data)
+    return jsonify(user_data)
+
+if __name__ == '__main__':
+    app.run()"
+55,Broken Object Property Level Authorization,Sensitive Data Exposure,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc123"", ""ssn"": ""123-45-6789""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    return jsonify(users.get(user_id, {{}}))
+
+if __name__ == '__main__':
+    app.run()"
+56,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+limiter = Limiter(app, key_func=get_remote_address)
+
+@app.route('/login', methods=['POST'])
+@limiter.limit(""5 per minute"")
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    user = authenticate_user(username, password)
+    if user:
+        return jsonify({{""token"": create_jwt_token(user)}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+57,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask
+import os
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['DEBUG'] = False
+app.config['TESTING'] = False
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = ""default-src 'self'""
+    return response
+
+@app.route('/')
+def home():
+    return ""Hello World""
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1')"
+58,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@example.com""}},
+         2: {{""name"": ""Bob"", ""email"": ""bob@example.com""}}}}
+api_keys = {{""key_alice"": 1, ""key_bob"": 2}}
+
+def get_user_from_token(token):
+    return api_keys.get(token)
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({{""error"": ""Missing authorization""}}), 401
+    
+    requesting_user = get_user_from_token(token)
+    if requesting_user != user_id:
+        return jsonify({{""error"": ""Unauthorized""}}), 403
+    
+    user = users.get(user_id)
+    if user:
+        return jsonify(user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+59,Security Misconfiguration,Using Default Secret Key,Error,"from flask import Flask, session
+
+app = Flask(__name__)
+app.secret_key = 'defaultsecret'  # This should be a strong, random value
+
+@app.route('/')
+def home():
+    session['user'] = 'admin'
+    return ""Welcome to the home page!""
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)"
+60,Broken Object Property Level Authorization,Mass Assignment,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user"", ""balance"": 100}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id in users:
+        users[user_id].update(request.json)
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+61,Server Side Request Forgery,SSRF with Redirects,Error,"from flask import Flask, request, jsonify
+import urllib.request
+app = Flask(__name__)
+
+@app.route('/proxy', methods=['GET'])
+def proxy():
+    url = request.args.get('url')
+    with urllib.request.urlopen(url) as response:
+        return response.read()
+
+if __name__ == '__main__':
+    app.run()"
+62,Server Side Request Forgery,Basic SSRF,Error,"from flask import Flask, request, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    response = requests.get(url)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+63,Broken Object Property Level Authorization,Unvalidated Property Update,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+products = {{1: {{""name"": ""Item"", ""price"": 100, ""discount"": 0}}}}
+
+@app.route('/product/<int:id>', methods=['PATCH'])
+def update_product(id):
+    for key, value in request.json.items():
+        products[id][key] = value
+    return jsonify(products[id])
+
+if __name__ == '__main__':
+    app.run()"
+64,Unsafe Consumption of APIs,Trusting External Data,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/product/<id>')
+def get_product(id):
+    response = requests.get(f'https://partner-api.com/products/{{id}}')
+    product = response.json()
+    
+    # Directly using external data in SQL
+    database.execute(f""INSERT INTO products VALUES ('{{product['name']}}', {{product['price']}})"")
+    return jsonify(product)
+
+if __name__ == '__main__':
+    app.run()"
+65,Broken Object Level Authorization,Missing Role-Based Access Control,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {}
+
+@app.route('/api/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    if user_id in users:
+        del users[user_id]
+        return jsonify({""success"": ""Deleted""})
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run()"
+66,Unsafe Consumption of APIs,No Input Validation,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    response = requests.get(f'https://external-api.com/users/{{username}}')
+    user_data = response.json()
+    database.save_user(user_data)
+    return jsonify(user_data)
+
+if __name__ == '__main__':
+    app.run()"
+67,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+ALLOWED_UPDATE_FIELDS = ['name', 'email']
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user""}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id not in users:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    update_data = {{k: v for k, v in request.json.items() if k in ALLOWED_UPDATE_FIELDS}}
+    users[user_id].update(update_data)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+68,Broken Object Level Authorization,Direct Object Reference Without Auth,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+database = {}
+
+@app.route('/profile/<int:user_id>', methods=['DELETE'])
+def delete_profile(user_id):
+    if user_id in database:
+        del database[user_id]
+        return jsonify({""success"": ""Deleted""})
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run()"
+69,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@example.com""}},
+         2: {{""name"": ""Bob"", ""email"": ""bob@example.com""}}}}
+api_keys = {{""key_alice"": 1, ""key_bob"": 2}}
+
+def get_user_from_token(token):
+    return api_keys.get(token)
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({{""error"": ""Missing authorization""}}), 401
+    
+    requesting_user = get_user_from_token(token)
+    if requesting_user != user_id:
+        return jsonify({{""error"": ""Unauthorized""}}), 403
+    
+    user = users.get(user_id)
+    if user:
+        return jsonify(user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+70,Server Side Request Forgery,SSRF with POST Requests,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+
+app = Flask(__name__)
+
+# Define a whitelist of allowed domains
+ALLOWED_DOMAINS = ['example.com', 'api.example.com']
+
+def is_url_allowed(url):
+    parsed_url = urlparse(url)
+    if parsed_url.scheme not in ['http', 'https']:
+        return False
+    if parsed_url.hostname not in ALLOWED_DOMAINS:
+        return False
+    return True
+
+@app.route('/post', methods=['POST'])
+def post_fetch():
+    url = request.json.get('url')
+    data = request.json.get('data', {})
+    
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    if not is_url_allowed(url):
+        return jsonify({'error': 'URL is not allowed'}), 403
+
+    try:
+        response = requests.post(url, data=data, allow_redirects=False)
+        return jsonify({'content': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+71,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+ALLOWED_UPDATE_FIELDS = ['name', 'email']
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user""}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id not in users:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    update_data = {{k: v for k, v in request.json.items() if k in ALLOWED_UPDATE_FIELDS}}
+    users[user_id].update(update_data)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+72,Unrestricted Resource Consumption,Missing Pagination,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/items', methods=['GET'])
+def get_all_items():
+    items = database.get_all_items()
+    return jsonify(items)
+
+if __name__ == '__main__':
+    app.run()"
+73,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+records = {{1: {{""owner_id"": 1, ""data"": ""Private""}},
+           2: {{""owner_id"": 2, ""data"": ""Secret""}}}}
+
+def get_current_user():
+    token = request.headers.get('Authorization')
+    return verify_token(token)
+
+@app.route('/record/<int:record_id>', methods=['PUT'])
+def update_record(record_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({{""error"": ""Unauthorized""}}), 401
+    
+    record = records.get(record_id)
+    if not record:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    if record['owner_id'] != current_user['id']:
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    records[record_id].update(request.json)
+    return jsonify({{""success"": ""Updated""}})
+
+if __name__ == '__main__':
+    app.run()"
+74,Broken Object Level Authorizatio,Missing Role-Based Access Control,Good,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Mock user data
+users = {
+    1: {""name"": ""Alice"", ""email"": ""alice@example.com""},
+    2: {""name"": ""Bob"", ""email"": ""bob@example.com""}
+}
+
+# Mock admin check function
+def is_admin():
+    # For demonstration, assume user is determined via request header
+    # In real applications, use proper authentication mechanisms
+    auth_header = request.headers.get('Authorization')
+    return auth_header == 'Bearer admin-token'
+
+@app.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    if not is_admin():
+        return jsonify({""error"": ""Unauthorized""}), 403
+    
+    if user_id in users:
+        del users[user_id]
+        return jsonify({""success"": ""User deleted successfully""})
+    else:
+        return jsonify({""error"": ""User not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+75,Improper Inventory Management,Insecure Direct Object Reference (IDOR),Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+inventory = {
+    'item1': 100,
+    'item2': 50,
+    'item3': 75
+}
+
+@app.route('/get_inventory/<item_name>', methods=['GET'])
+def get_inventory(item_name):
+    if item_name in inventory:
+        return jsonify({'item_name': item_name, 'quantity': inventory[item_name]}), 200
+    else:
+        return jsonify({'error': 'Item not found in inventory'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+76,Unrestricted Resource Consumption,Unrestricted File Upload,Error,"from flask import Flask, request
+app = Flask(__name__)
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files['file']
+    file.save(f'/uploads/{{file.filename}}')
+    return ""Uploaded""
+
+if __name__ == '__main__':
+    app.run()"
+77,Broken Function Level Authorization,Predictable Admin URL,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/admin_panel', methods=['GET'])
+def admin_panel():
+    return jsonify(get_admin_data())
+
+@app.route('/admin_panel/config', methods=['POST'])
+def update_config():
+    return jsonify(update_system_config())
+
+if __name__ == '__main__':
+    app.run()"
+78,Unrestricted Access to Sensitive Business Flows,Unprotected Financial Operation,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/transfer', methods=['POST'])
+def transfer_money():
+    from_account = request.json['from']
+    to_account = request.json['to']
+    amount = request.json['amount']
+    
+    execute_transfer(from_account, to_account, amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+79,Broken Object Level Authorization,Direct Object Reference Without Auth,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+profiles = {1: {""owner"": 1, ""content"": ""Private data""},
+              2: {""owner"": 2, ""content"": ""Secret info""}}
+
+@app.route('/user/<int:id>', methods=['PUT'])
+def update_document(id):
+    if id in profiles:
+        profiles[id].update(request.json)
+        return jsonify({""success"": ""Updated""})
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+80,Broken Function Level Authorization,No Authorization Check,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/admin/users', methods=['GET'])
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+81,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask, jsonify
+import os
+import logging
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+logging.basicConfig(level=logging.ERROR)
+
+@app.errorhandler(Exception)
+def handle_error(e):
+    logging.error(f""Error: {{e}}"")
+    return jsonify({{""error"": ""An error occurred""}}), 500
+
+@app.route('/user/<int:id>')
+def get_user(id):
+    user = database.get_user(id)
+    return jsonify(user)
+
+if __name__ == '__main__':
+    app.run()"
+82,Broken Function Level Authorization,Missing Role Check,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/settings', methods=['PUT'])
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+83,Unrestricted Resource Consumption,Unrestricted Loop in a Route,Good,"from flask import Flask, request, abort
+
+app = Flask(__name__)
+
+@app.route('/compute')
+def compute():
+    try:
+        # Get the iterations parameter and default to 1000 if not provided
+        iterations = int(request.args.get('iterations', '1000'))
+    except ValueError:
+        return ""Invalid input: iterations must be an integer"", 400
+
+    # Limit the maximum number of iterations to 10,000
+    max_iterations = 10000
+    if iterations < 1 or iterations > max_iterations:
+        return f""Iterations must be between 1 and {max_iterations}"", 400
+
+    result = 0
+    for i in range(iterations):
+        result += i * i
+
+    return f""Computed sum of squares: {result}""
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+84,Broken Function Level Authorization,No Authorization Check,Error,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# Simulating a user database
+users = {
+    'user1': {'username': 'user1', 'password': 'password1', 'role': 'user'},
+    'admin': {'username': 'admin', 'password': 'adminpass', 'role': 'admin'}
+}
+
+# Simulated login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    user = users.get(username)
+    if user and user['password'] == password:
+        session['username'] = username
+        return jsonify({'message': 'Logged in successfully!'})
+    return jsonify({'message': 'Invalid credentials!'}), 401
+
+# Vulnerable admin function without role check
+@app.route('/admin/delete_user', methods=['POST'])
+def delete_user():
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized!'}), 401
+
+    user_to_delete = request.json.get('username')
+    if user_to_delete in users:
+        del users[user_to_delete]
+        return jsonify({'message': f'User {user_to_delete} deleted successfully!'})
+    return jsonify({'message': 'User not found!'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+85,Unrestricted Resource Consumption,Unrestricted Database Queries,Good,"from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///example.db'
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+
+@app.route('/users')
+def get_users():
+    try:
+        limit = int(request.args.get('limit', '100'))  # default to 100 if not provided
+        MAX_LIMIT = 1000  # define a maximum limit
+        if limit > MAX_LIMIT:
+            limit = MAX_LIMIT
+        users = User.query.limit(limit).all()
+        return jsonify({""users"": [user.name for user in users]})
+    except ValueError:
+        return jsonify({""error"": ""Invalid limit value""}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+86,Server Side Request Forgery,SSRF with POST Requests,Error,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/post')
+def post_fetch():
+    url = request.args.get('url')
+    data = request.args.get('data', {})
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    try:
+        response = requests.post(url, data=data)
+        return jsonify({'content': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+87,Broken Object Property Level Authorization,Lack of Authorization Check,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+# Dummy data (normally would come from a database)
+users = [
+    {'id': 1, 'username': 'alice', 'role': 'admin'},
+    {'id': 2, 'username': 'bob', 'role': 'user'}
+]
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    # Assume user_id comes from the request
+    user = next((user for user in users if user['id'] == user_id), None)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # No authorization check here!
+    return jsonify({'username': user['username']}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+88,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+
+users_db = {}
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if len(password) < 12:
+        return jsonify({{""error"": ""Password must be at least 12 characters""}}), 400
+    
+    hashed = generate_password_hash(password)
+    users_db[username] = hashed
+    return jsonify({{""success"": True}})
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    stored_hash = users_db.get(username)
+    if stored_hash and check_password_hash(stored_hash, password):
+        token = generate_secure_token(username)
+        return jsonify({{""token"": token}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+89,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+SAFE_FIELDS = ['name', 'email', 'created_at']
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc"", ""ssn"": ""123""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = users.get(user_id)
+    if user:
+        safe_user = {{k: v for k, v in user.items() if k in SAFE_FIELDS}}
+        return jsonify(safe_user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+90,Unrestricted Access to Sensitive Business Flows,Unrestricted Data Export,Error,"from flask import Flask, request, send_file
+app = Flask(__name__)
+
+@app.route('/export', methods=['GET'])
+def export_data():
+    format = request.args.get('format', 'csv')
+    data = database.export_all_data()
+    return send_file(create_export(data, format))
+
+if __name__ == '__main__':
+    app.run()"
+91,Unsafe Consumption of APIs,Insufficient Authentication Check,Good,"from flask import Flask, request, jsonify
+import requests
+import re
+
+app = Flask(__name__)
+
+# Define a function to validate the API key
+def validate_api_key(api_key):
+    # Implement your API key validation logic here
+    # For example, you might check against a list of valid keys or a database
+    return api_key == 'your-valid-api-key'
+
+# Define a function to sanitize user input
+def sanitize_input(user_input):
+    # Perform input sanitization to prevent injection attacks
+    if not isinstance(user_input, str):
+        raise ValueError(""Invalid input type"")
+    sanitized_input = re.sub(r'[^\w\s]', '', user_input)  # Remove non-alphanumeric characters
+    return sanitized_input
+
+@app.route('/secure_api', methods=['POST'])
+def secure_api():
+    api_key = request.headers.get('X-API-Key')
+    if not api_key or not validate_api_key(api_key):
+        return jsonify({'error': 'Unauthorized access'}), 401
+
+    user_input = request.json.get('user_input')
+    if user_input is None:
+        return jsonify({'error': 'No input provided'}), 400
+
+    try:
+        sanitized_input = sanitize_input(user_input)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    # Assume this endpoint consumes an authenticated external API
+    try:
+        response = requests.post(
+            'https://external.api.com/data',
+            headers={'X-API-Key': api_key},
+            json={'user_input': sanitized_input}
+        )
+        response.raise_for_status()  # Raise an exception for HTTP errors
+    except requests.RequestException as e:
+        return jsonify({'error': 'External API request failed', 'details': str(e)}), 500
+
+    return jsonify(response.json()), 200"
+92,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+import ipaddress
+from urllib.parse import urlparse
+import socket
+app = Flask(__name__)
+
+def is_internal_ip(hostname):
+    try:
+        ip = socket.gethostbyname(hostname)
+        ip_obj = ipaddress.ip_address(ip)
+        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+    except:
+        return True
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    parsed = urlparse(url)
+    
+    if is_internal_ip(parsed.hostname):
+        return jsonify({{""error"": ""Internal URLs not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+93,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+import ipaddress
+from urllib.parse import urlparse
+import socket
+app = Flask(__name__)
+
+def is_internal_ip(hostname):
+    try:
+        ip = socket.gethostbyname(hostname)
+        ip_obj = ipaddress.ip_address(ip)
+        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+    except:
+        return True
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    parsed = urlparse(url)
+    
+    if is_internal_ip(parsed.hostname):
+        return jsonify({{""error"": ""Internal URLs not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+94,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+records = {{1: {{""owner_id"": 1, ""data"": ""Private""}},
+           2: {{""owner_id"": 2, ""data"": ""Secret""}}}}
+
+def get_current_user():
+    token = request.headers.get('Authorization')
+    return verify_token(token)
+
+@app.route('/record/<int:record_id>', methods=['PUT'])
+def update_record(record_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({{""error"": ""Unauthorized""}}), 401
+    
+    record = records.get(record_id)
+    if not record:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    if record['owner_id'] != current_user['id']:
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    records[record_id].update(request.json)
+    return jsonify({{""success"": ""Updated""}})
+
+if __name__ == '__main__':
+    app.run()"
+95,Security Misconfiguration,Insecure HTTP Headers,Good,"from flask import Flask
+
+app = Flask(__name__)
+
+@app.after_request
+def apply_security_headers(response):
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Content-Security-Policy'] = ""default-src 'self'""
+    return response
+
+@app.route('/')
+def home():
+    return ""Welcome to the home page!""
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)"
+96,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, session, jsonify
+from datetime import timedelta
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
+@app.route('/login', methods=['POST'])
+def login():
+    if authenticate(request.json):
+        session.permanent = True
+        session['user_id'] = request.json['user_id']
+        session.regenerate()
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Failed""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+97,Broken Function Level Authorization,Predictable Admin URL,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/admin_panel', methods=['GET'])
+def admin_panel():
+    return jsonify(get_admin_data())
+
+@app.route('/admin_panel/config', methods=['POST'])
+def update_config():
+    return jsonify(update_system_config())
+
+if __name__ == '__main__':
+    app.run()"
+98,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+records = {{1: {{""owner_id"": 1, ""data"": ""Private""}},
+           2: {{""owner_id"": 2, ""data"": ""Secret""}}}}
+
+def get_current_user():
+    token = request.headers.get('Authorization')
+    return verify_token(token)
+
+@app.route('/record/<int:record_id>', methods=['PUT'])
+def update_record(record_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({{""error"": ""Unauthorized""}}), 401
+    
+    record = records.get(record_id)
+    if not record:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    if record['owner_id'] != current_user['id']:
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    records[record_id].update(request.json)
+    return jsonify({{""success"": ""Updated""}})
+
+if __name__ == '__main__':
+    app.run()"
+99,Broken Function Level Authorization,No Authorization Check,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/admin/users', methods=['GET'])
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+100,Server Side Request Forgery,SSRF with Redirects,Error,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/redirect')
+def redirect_fetch():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    try:
+        response = requests.get(url, allow_redirects=True)
+        return jsonify({'content': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+101,Unrestricted Access to Sensitive Business Flows,Unprotected Financial Operation,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/transfer', methods=['POST'])
+def transfer_money():
+    from_account = request.json['from']
+    to_account = request.json['to']
+    amount = request.json['amount']
+    
+    execute_transfer(from_account, to_account, amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+102,Server Side Request Forgery,SSRF with Redirects,Error,"from flask import Flask, request, jsonify
+import urllib.request
+app = Flask(__name__)
+
+@app.route('/proxy', methods=['GET'])
+def proxy():
+    url = request.args.get('url')
+    with urllib.request.urlopen(url) as response:
+        return response.read()
+
+if __name__ == '__main__':
+    app.run()"
+103,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask
+import os
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['DEBUG'] = False
+app.config['TESTING'] = False
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = ""default-src 'self'""
+    return response
+
+@app.route('/')
+def home():
+    return ""Hello World""
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1')"
+104,Broken Object Level Authorizatio,Inadequate User Validation,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Mock user data
+users = {
+    1: {""name"": ""Alice"", ""email"": ""alice@example.com""},
+    2: {""name"": ""Bob"", ""email"": ""bob@example.com""}
+}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = users.get(user_id)
+    if user:
+        return jsonify(user)
+    else:
+        return jsonify({""error"": ""User not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+105,Broken Object Level Authorizatio,Lack of Ownership Verification,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Mock user data
+users = {
+    1: {""name"": ""Alice"", ""email"": ""alice@example.com""},
+    2: {""name"": ""Bob"", ""email"": ""bob@example.com""}
+}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id in users:
+        user_data = request.json
+        users[user_id].update(user_data)
+        return jsonify({""success"": ""User updated successfully""})
+    else:
+        return jsonify({""error"": ""User not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+106,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+records = {{1: {{""owner_id"": 1, ""data"": ""Private""}},
+           2: {{""owner_id"": 2, ""data"": ""Secret""}}}}
+
+def get_current_user():
+    token = request.headers.get('Authorization')
+    return verify_token(token)
+
+@app.route('/record/<int:record_id>', methods=['PUT'])
+def update_record(record_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({{""error"": ""Unauthorized""}}), 401
+    
+    record = records.get(record_id)
+    if not record:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    if record['owner_id'] != current_user['id']:
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    records[record_id].update(request.json)
+    return jsonify({{""success"": ""Updated""}})
+
+if __name__ == '__main__':
+    app.run()"
+107,Broken Object Property Level Authorization,Improper Use of Object References,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+# Dummy data (normally would come from a database)
+users = [
+    {'id': 1, 'username': 'alice', 'role': 'admin'},
+    {'id': 2, 'username': 'bob', 'role': 'user'}
+]
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    # Assume user_id comes from the request
+    user = next((user for user in users if user['id'] == user_id), None)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Simulating improper use of user data based on an assumption
+    if user['username'] == 'alice':
+        return jsonify({'error': 'Unauthorized access to Alice\'s account'}), 403
+
+    return jsonify({'username': user['username']}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+108,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, session, jsonify
+from datetime import timedelta
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
+@app.route('/login', methods=['POST'])
+def login():
+    if authenticate(request.json):
+        session.permanent = True
+        session['user_id'] = request.json['user_id']
+        session.regenerate()
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Failed""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+109,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+ALLOWED_UPDATE_FIELDS = ['name', 'email']
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user""}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id not in users:
+        return jsonify({{""error"": ""Not found""}}), 404
+    
+    update_data = {{k: v for k, v in request.json.items() if k in ALLOWED_UPDATE_FIELDS}}
+    users[user_id].update(update_data)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+110,Broken Function Level Authorization,Missing Role Check,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/settings', methods=['PUT'])
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+111,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+112,Broken Authentication,Weak Password Policy,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if len(password) >= 4:
+        save_user(username, password)
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Password too short""}})
+
+if __name__ == '__main__':
+    app.run()"
+113,Broken Authentication,Hardcoded Credentials,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+USERNAME = ""admin""
+PASSWORD = ""password123""
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if username == USERNAME and password == PASSWORD:
+        return jsonify({{""token"": ""admin_token_12345""}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+114,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+115,Unrestricted Access to Sensitive Business Flows,Unprotected Financial Operation,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/transfer', methods=['POST'])
+def transfer_money():
+    from_account = request.json['from']
+    to_account = request.json['to']
+    amount = request.json['amount']
+    
+    execute_transfer(from_account, to_account, amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+116,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+limiter = Limiter(app, key_func=get_remote_address)
+
+@app.route('/login', methods=['POST'])
+@limiter.limit(""5 per minute"")
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    user = authenticate_user(username, password)
+    if user:
+        return jsonify({{""token"": create_jwt_token(user)}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+117,Security Misconfiguration,Debug Mode Enabled in Production,Error,"from flask import Flask
+
+app = Flask(__name__)
+app.config['DEBUG'] = True  # Debug mode should not be enabled in production
+
+@app.route('/')
+def home():
+    return ""Welcome to the home page!""
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)"
+118,Broken Function Level Authorization,No Authorization Check,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/admin/users', methods=['GET'])
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+119,Broken Object Level Authorization,Unfiltered Resource Access,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {1: {""name"": ""Alice"", ""email"": ""alice@example.com"", ""balance"": 5000},
+              2: {""name"": ""Bob"", ""email"": ""bob@example.com"", ""balance"": 3000}}
+
+@app.route('/api/account/<int:user_id>', methods=['GET'])
+def get_account(user_id):
+    account = users.get(user_id)
+    if account:
+        return jsonify(account)
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+120,Unrestricted Access to Sensitive Business Flows,Administrative Operations Accessible to Regular Users,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/delete-user', methods=['POST'])
+def delete_user():
+    user_id = request.json.get('user_id')
+
+    # Simulate deleting a user
+    return jsonify({
+        'status': 'success',
+        'message': f'User with ID {user_id} deleted'
+    }), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+121,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+SAFE_FIELDS = ['name', 'email', 'created_at']
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc"", ""ssn"": ""123""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = users.get(user_id)
+    if user:
+        safe_user = {{k: v for k, v in user.items() if k in SAFE_FIELDS}}
+        return jsonify(safe_user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+122,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_permission(permission):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or permission not in user.get('permissions', []):
+                return jsonify({{""error"": ""Permission denied""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/api/settings', methods=['PUT'])
+@require_permission('settings:write')
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+123,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+MAX_LIMIT = 100
+DEFAULT_LIMIT = 20
+
+@app.route('/items', methods=['GET'])
+def get_items():
+    page = max(1, int(request.args.get('page', 1)))
+    limit = min(MAX_LIMIT, int(request.args.get('limit', DEFAULT_LIMIT)))
+    offset = (page - 1) * limit
+    
+    items = database.query(f""SELECT * FROM items LIMIT {{limit}} OFFSET {{offset}}"")
+    total = database.count(""items"")
+    
+    return jsonify({{
+        ""items"": items,
+        ""page"": page,
+        ""limit"": limit,
+        ""total"": total
+    }})
+
+if __name__ == '__main__':
+    app.run()"
+124,Unrestricted Resource Consumption,Unrestricted File Upload,Good,"from flask import Flask, request, abort
+
+app = Flask(__name__)
+
+# Set maximum upload size to 16MB (16 * 1024 * 1024 bytes)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return ""No file part"", 400
+    file = request.files['file']
+    if file.filename == '':
+        return ""No selected file"", 400
+    file.save(f""./uploads/{file.filename}"")
+    return ""File uploaded successfully"", 200
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return ""File is too large"", 413
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+125,Broken Authentication,Missing Rate Limiting,Good,"from flask import Flask, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+app = Flask(__name__)
+
+# Initialize the rate limiter
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[""5 per minute""]
+)
+
+# Attach the limiter to the app
+limiter.init_app(app)
+
+# User data for demonstration purposes
+users = {
+    'user1': 'password1',
+    'user2': 'password2'
+}
+
+@app.route('/login', methods=['POST'])
+@limiter.limit(""5 per minute"")  # Limit to 5 login attempts per minute per IP
+def login():
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
+
+    if username in users and users[username] == password:
+        return jsonify({""message"": ""Login successful!""}), 200
+    else:
+        return jsonify({""message"": ""Invalid credentials""}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+126,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+from marshmallow import Schema, fields, ValidationError
+app = Flask(__name__)
+
+class UserSchema(Schema):
+    username = fields.Str(required=True, validate=lambda x: len(x) <= 50)
+    email = fields.Email(required=True)
+    
+user_schema = UserSchema()
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    try:
+        response = requests.get(
+            f'https://external-api.com/users/{{username}}',
+            timeout=5,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        user_data = user_schema.load(response.json())
+        database.save_user_safe(user_data)
+        return jsonify(user_data)
+    except ValidationError as e:
+        return jsonify({{""error"": ""Invalid data from external API""}}), 400
+    except requests.RequestException as e:
+        return jsonify({{""error"": ""External API error""}}), 502
+
+if __name__ == '__main__':
+    app.run()"
+127,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+import ipaddress
+from urllib.parse import urlparse
+import socket
+app = Flask(__name__)
+
+def is_internal_ip(hostname):
+    try:
+        ip = socket.gethostbyname(hostname)
+        ip_obj = ipaddress.ip_address(ip)
+        return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+    except:
+        return True
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    parsed = urlparse(url)
+    
+    if is_internal_ip(parsed.hostname):
+        return jsonify({{""error"": ""Internal URLs not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+128,Broken Authentication,Hardcoded Credentials,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Hardcoded credentials
+USERNAME = 'admin'
+PASSWORD = 'password123'
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if data['username'] == USERNAME and data['password'] == PASSWORD:
+        return jsonify({""message"": ""Login successful!""}), 200
+    else:
+        return jsonify({""message"": ""Invalid credentials""}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+129,Server Side Request Forgery,SSRF with Redirects,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+
+app = Flask(__name__)
+
+# Define a list of allowed domains
+ALLOWED_DOMAINS = {'example.com', 'anotherexample.com'}
+
+def is_url_safe(url):
+    try:
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc
+        return domain in ALLOWED_DOMAINS
+    except Exception:
+        return False
+
+@app.route('/redirect')
+def redirect_fetch():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    
+    if not is_url_safe(url):
+        return jsonify({'error': 'URL is not allowed'}), 400
+    
+    try:
+        response = requests.get(url, allow_redirects=True, timeout=5)
+        return jsonify({'content': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+130,Broken Function Level Authorization,Predictable Admin URL,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/admin_panel', methods=['GET'])
+def admin_panel():
+    return jsonify(get_admin_data())
+
+@app.route('/admin_panel/config', methods=['POST'])
+def update_config():
+    return jsonify(update_system_config())
+
+if __name__ == '__main__':
+    app.run()"
+131,Broken Object Level Authorizatio,Missing Role-Based Access Control,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Mock user data
+users = {
+    1: {""name"": ""Alice"", ""email"": ""alice@example.com""},
+    2: {""name"": ""Bob"", ""email"": ""bob@example.com""}
+}
+
+@app.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    if user_id in users:
+        del users[user_id]
+        return jsonify({""success"": ""User deleted successfully""})
+    else:
+        return jsonify({""error"": ""User not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+132,Unrestricted Resource Consumption,Unrestricted Loop,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/process', methods=['POST'])
+def process():
+    count = int(request.json.get('count', 0))
+    result = []
+    for i in range(count):
+        result.append(expensive_operation(i))
+    return jsonify(result)
+
+if __name__ == '__main__':
+    app.run()"
+133,Unrestricted Resource Consumption,Unrestricted File Upload,Error,"from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return ""No file part""
+    file = request.files['file']
+    if file.filename == '':
+        return ""No selected file""
+    file.save(f""./uploads/{file.filename}"")
+    return ""File uploaded successfully""
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+134,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+135,Broken Object Level Authorization,Lack of Ownership Verification,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {1: {""name"": ""Alice"", ""email"": ""alice@example.com"", ""balance"": 5000},
+              2: {""name"": ""Bob"", ""email"": ""bob@example.com"", ""balance"": 3000}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_record(user_id):
+    record = users.get(user_id)
+    if record:
+        return jsonify(record)
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+136,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+MAX_LIMIT = 100
+DEFAULT_LIMIT = 20
+
+@app.route('/items', methods=['GET'])
+def get_items():
+    page = max(1, int(request.args.get('page', 1)))
+    limit = min(MAX_LIMIT, int(request.args.get('limit', DEFAULT_LIMIT)))
+    offset = (page - 1) * limit
+    
+    items = database.query(f""SELECT * FROM items LIMIT {{limit}} OFFSET {{offset}}"")
+    total = database.count(""items"")
+    
+    return jsonify({{
+        ""items"": items,
+        ""page"": page,
+        ""limit"": limit,
+        ""total"": total
+    }})
+
+if __name__ == '__main__':
+    app.run()"
+137,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+import os
+app = Flask(__name__)
+
+ALLOWED_EXTENSIONS = {{'png', 'jpg', 'jpeg', 'gif'}}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({{""error"": ""No file""}}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({{""error"": ""Invalid file type""}}), 400
+    
+    file.seek(0, os.SEEK_END)
+    if file.tell() > MAX_FILE_SIZE:
+        return jsonify({{""error"": ""File too large""}}), 400
+    file.seek(0)
+    
+    secure_filename = werkzeug.utils.secure_filename(file.filename)
+    file.save(os.path.join('/uploads', secure_filename))
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+138,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+139,Server Side Request Forgery,SSRF in Image Processing,Error,"from flask import Flask, request, jsonify
+import requests
+from PIL import Image
+from io import BytesIO
+app = Flask(__name__)
+
+@app.route('/process-image', methods=['POST'])
+def process_image():
+    image_url = request.json.get('image_url')
+    response = requests.get(image_url)
+    img = Image.open(BytesIO(response.content))
+    return jsonify({{""size"": img.size}})
+
+if __name__ == '__main__':
+    app.run()"
+140,Broken Object Level Authorization,Lack of Ownership Verification,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+database = [
+    {""id"": 1, ""user_id"": 1, ""data"": ""User 1 private""},
+    {""id"": 2, ""user_id"": 2, ""data"": ""User 2 private""}
+]
+
+@app.route('/profile', methods=['GET'])
+def list_profiles():
+    return jsonify(database)
+
+if __name__ == '__main__':
+    app.run()"
+141,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+import os
+app = Flask(__name__)
+
+EXTERNAL_API_KEY = os.environ.get('EXTERNAL_API_KEY')
+TRUSTED_HOSTS = ['api.trusted-partner.com']
+
+@app.route('/external-data')
+def get_external():
+    try:
+        response = requests.get(
+            'https://api.trusted-partner.com/data',
+            headers={{'Authorization': f'Bearer {{EXTERNAL_API_KEY}}'}},
+            timeout=10,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        validated_data = validate_and_sanitize(data)
+        return jsonify(validated_data)
+    except Exception as e:
+        logging.error(f""External API error: {{e}}"")
+        return jsonify({{""error"": ""Service unavailable""}}), 503
+
+if __name__ == '__main__':
+    app.run()"
+142,Broken Object Level Authorization,Direct Object Reference Without Auth,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+database = {1: {""owner"": 1, ""content"": ""Private data""},
+              2: {""owner"": 2, ""content"": ""Secret info""}}
+
+@app.route('/api/user/<int:id>', methods=['PUT'])
+def update_account(id):
+    if id in database:
+        database[id].update(request.json)
+        return jsonify({""success"": ""Updated""})
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+143,Broken Object Property Level Authorization,Insecure Direct Object Reference (IDOR),Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+# Dummy data (normally would come from a database)
+users = [
+    {'id': 1, 'username': 'alice', 'role': 'admin'},
+    {'id': 2, 'username': 'bob', 'role': 'user'}
+]
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    # Assume user_id comes from the request
+    user = next((user for user in users if user['id'] == user_id), None)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Incorrect authorization check: checking for admin role only
+    if request.args.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    return jsonify({'username': user['username']}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+144,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+145,Security Misconfiguration,Insecure HTTP Headers,Error,"from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    response = app.make_response(""Welcome to the home page!"")
+    # Missing security headers
+    # response.headers['X-Frame-Options'] = 'DENY'
+    # response.headers['X-Content-Type-Options'] = 'nosniff'
+    # response.headers['Content-Security-Policy'] = ""default-src 'self'""
+    return response
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)"
+146,Unrestricted Resource Consumption,Unrestricted Loop,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/process', methods=['POST'])
+def process():
+    count = int(request.json.get('count', 0))
+    result = []
+    for i in range(count):
+        result.append(expensive_operation(i))
+    return jsonify(result)
+
+if __name__ == '__main__':
+    app.run()"
+147,Unrestricted Access to Sensitive Business Flows,Administrative Operations Accessible to Regular Users,Good,"from flask import Flask, request, jsonify, abort
+
+app = Flask(__name__)
+
+# Simulated admin token
+ADMIN_TOKEN = 'secret_admin_token'
+
+def check_admin_privileges():
+    token = request.headers.get('Authorization')
+    if token != ADMIN_TOKEN:
+        abort(403, description=""Access denied: Admin privileges required"")
+
+@app.route('/delete-user', methods=['POST'])
+def delete_user():
+    check_admin_privileges()  # Check if the user has admin privileges
+
+    user_id = request.json.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'User ID is required'}), 400
+
+    # Simulate deleting a user
+    return jsonify({
+        'status': 'success',
+        'message': f'User with ID {user_id} deleted'
+    }), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+148,Security Misconfiguration,Verbose Error Messages,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/user/<int:id>')
+def get_user(id):
+    try:
+        user = database.get_user(id)
+        return jsonify(user)
+    except Exception as e:
+        return jsonify({{""error"": str(e), ""traceback"": traceback.format_exc()}}), 500
+
+if __name__ == '__main__':
+    app.run()"
+149,Server Side Request Forgery,Basic SSRF,Error,"from flask import Flask, request, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    response = requests.get(url)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+150,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_role(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or user.get('role') != role:
+                return jsonify({{""error"": ""Forbidden""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/admin/users', methods=['GET'])
+@require_role('admin')
+def list_all_users():
+    return jsonify(users)
+
+if __name__ == '__main__':
+    app.run()"
+151,Security Misconfiguration,Using Default Secret Key,Good,"from flask import Flask, session
+import secrets
+
+app = Flask(__name__)
+app.secret_key = secrets.token_hex(16)  # Generate a strong, random secret key
+
+@app.route('/')
+def home():
+    session['user'] = 'admin'
+    return ""Welcome to the home page!""
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)"
+152,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask
+import os
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['DEBUG'] = False
+app.config['TESTING'] = False
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = ""default-src 'self'""
+    return response
+
+@app.route('/')
+def home():
+    return ""Hello World""
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1')"
+153,Broken Object Property Level Authorization,Improper Use of Object References,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+# Dummy data (normally would come from a database)
+users = [
+    {'id': 1, 'username': 'alice', 'role': 'admin'},
+    {'id': 2, 'username': 'bob', 'role': 'user'}
+]
+
+# Mock authentication function to simulate a logged-in user
+# In a real application, this should come from a session or token
+def get_logged_in_user():
+    # Simulate a logged-in user with role 'user' (could be 'admin' for different access)
+    return {'id': 2, 'username': 'bob', 'role': 'user'}
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = next((user for user in users if user['id'] == user_id), None)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    logged_in_user = get_logged_in_user()
+
+    # Example of role-based access control
+    if logged_in_user['role'] != 'admin' and logged_in_user['id'] != user_id:
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    return jsonify({'username': user['username']}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+154,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+
+users_db = {}
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if len(password) < 12:
+        return jsonify({{""error"": ""Password must be at least 12 characters""}}), 400
+    
+    hashed = generate_password_hash(password)
+    users_db[username] = hashed
+    return jsonify({{""success"": True}})
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    stored_hash = users_db.get(username)
+    if stored_hash and check_password_hash(stored_hash, password):
+        token = generate_secure_token(username)
+        return jsonify({{""token"": token}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+155,Server Side Request Forgery,SSRF in Image Processing,Error,"from flask import Flask, request, jsonify
+import requests
+from PIL import Image
+from io import BytesIO
+app = Flask(__name__)
+
+@app.route('/process-image', methods=['POST'])
+def process_image():
+    image_url = request.json.get('image_url')
+    response = requests.get(image_url)
+    img = Image.open(BytesIO(response.content))
+    return jsonify({{""size"": img.size}})
+
+if __name__ == '__main__':
+    app.run()"
+156,Broken Object Property Level Authorization,Lack of Authorization Check,Good,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Dummy data (normally would come from a database)
+users = [
+    {'id': 1, 'username': 'alice', 'role': 'admin'},
+    {'id': 2, 'username': 'bob', 'role': 'user'}
+]
+
+# Simulate current user (for example purposes only)
+def get_current_user():
+    # In a real application, this should be obtained from session/authentication
+    # For example, assume the current user is 'bob' with id 2
+    return {'id': 2, 'username': 'bob', 'role': 'user'}
+
+@app.route('/api/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    # Retrieve the user from the data
+    user = next((user for user in users if user['id'] == user_id), None)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Get the current user
+    current_user = get_current_user()
+
+    # Authorization check
+    if current_user['role'] != 'admin' and current_user['id'] != user_id:
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    return jsonify({'username': user['username']}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+157,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        user = verify_token(token)
+        if not user or user.get('role') != 'admin':
+            return jsonify({{""error"": ""Admin access required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    users = database.get_all_users()
+    return jsonify(users)
+
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    database.delete_user(user_id)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+158,Improper Inventory Management,Exposed Internal Endpoints,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/internal/users')
+def internal_users():
+    return jsonify(database.get_all_internal_users())
+
+@app.route('/api/v2/users')
+def v2_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/beta/experimental')
+def beta_endpoint():
+    return jsonify({{""data"": ""experimental feature""}})
+
+if __name__ == '__main__':
+    app.run()"
+159,Broken Object Level Authorizatio,Lack of Ownership Verification,Good,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Mock user data
+users = {
+    1: {""name"": ""Alice"", ""email"": ""alice@example.com""},
+    2: {""name"": ""Bob"", ""email"": ""bob@example.com""}
+}
+
+# Mock token data
+tokens = {
+    ""token123"": 1,  # Token for user 1
+    ""token456"": 2   # Token for user 2
+}
+
+def get_authenticated_user():
+    token = request.headers.get('Authorization')
+    if token and token in tokens:
+        return tokens[token]
+    return None
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    authenticated_user_id = get_authenticated_user()
+    if authenticated_user_id is None:
+        return jsonify({""error"": ""Unauthorized""}), 401
+    
+    if authenticated_user_id != user_id:
+        return jsonify({""error"": ""Forbidden""}), 403
+
+    if user_id in users:
+        user_data = request.json
+        users[user_id].update(user_data)
+        return jsonify({""success"": ""User updated successfully""})
+    else:
+        return jsonify({""error"": ""User not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+160,Broken Object Property Level Authorization,Mass Assignment,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user"", ""balance"": 100}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id in users:
+        users[user_id].update(request.json)
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+161,Unsafe Consumption of APIs,Insecure Data Transmission,Good,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/transmit_data', methods=['POST'])
+def transmit_data():
+    user_input = request.json.get('user_input')
+
+    # Updated endpoint to use HTTPS for secure communication
+    response = requests.post(
+        'https://secure.api.com/transmit',  # Use HTTPS for secure connection
+        json={'data': user_input}
+    )
+
+    return jsonify(response.json()), 200"
+162,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+MAX_LIMIT = 100
+DEFAULT_LIMIT = 20
+
+@app.route('/items', methods=['GET'])
+def get_items():
+    page = max(1, int(request.args.get('page', 1)))
+    limit = min(MAX_LIMIT, int(request.args.get('limit', DEFAULT_LIMIT)))
+    offset = (page - 1) * limit
+    
+    items = database.query(f""SELECT * FROM items LIMIT {{limit}} OFFSET {{offset}}"")
+    total = database.count(""items"")
+    
+    return jsonify({{
+        ""items"": items,
+        ""page"": page,
+        ""limit"": limit,
+        ""total"": total
+    }})
+
+if __name__ == '__main__':
+    app.run()"
+163,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+164,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+app = Flask(__name__)
+
+ALLOWED_HOSTS = ['api.trusted.com', 'cdn.example.com']
+
+def is_safe_url(url):
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            return False
+        if parsed.hostname not in ALLOWED_HOSTS:
+            return False
+        if parsed.port and parsed.port not in [80, 443]:
+            return False
+        return True
+    except:
+        return False
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    
+    if not is_safe_url(url):
+        return jsonify({{""error"": ""URL not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+165,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+166,Unsafe Consumption of APIs,Lack of Input Validation,Good,"from flask import Flask, request, jsonify, abort
+import requests
+import re
+
+app = Flask(__name__)
+
+@app.route('/vulnerable_api', methods=['POST'])
+def vulnerable_api():
+    user_input = request.json.get('user_input')
+
+    # Validate input
+    if not user_input:
+        abort(400, description=""user_input is required"")
+    
+    # Example validation: Ensure user_input is a valid alphanumeric string
+    if not isinstance(user_input, str) or not re.match(r'^[a-zA-Z0-9_-]+$', user_input):
+        abort(400, description=""Invalid user_input format"")
+
+    # Sanitize input
+    sanitized_input = re.sub(r'[^a-zA-Z0-9_-]', '', user_input)
+
+    # Use parameterized URL construction to avoid injection issues
+    url = f'https://external.api.com/data/{sanitized_input}'
+    response = requests.get(url)
+
+    # Handle response errors
+    if response.status_code != 200:
+        abort(response.status_code, description=""External API request failed"")
+
+    return jsonify(response.json()), 200"
+167,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+168,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_role(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or user.get('role') != role:
+                return jsonify({{""error"": ""Forbidden""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/admin/users', methods=['GET'])
+@require_role('admin')
+def list_all_users():
+    return jsonify(users)
+
+if __name__ == '__main__':
+    app.run()"
+169,Unrestricted Resource Consumption,Unrestricted Database Queries,Error,"from flask import Flask, request
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///example.db'
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+
+@app.route('/users')
+def get_users():
+    limit = int(request.args.get('limit', '100'))  # default to 100 if not provided
+    users = User.query.limit(limit).all()
+    return {""users"": [user.name for user in users]}
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+170,Broken Authentication,Hardcoded Credentials,Good,"from flask import Flask, request, jsonify
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+app = Flask(__name__)
+
+# Get credentials from environment variables
+USERNAME = os.getenv('USERNAME')
+PASSWORD = os.getenv('PASSWORD')
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if data['username'] == USERNAME and data['password'] == PASSWORD:
+        return jsonify({""message"": ""Login successful!""}), 200
+    else:
+        return jsonify({""message"": ""Invalid credentials""}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+171,Broken Object Property Level Authorization,Unvalidated Property Update,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+products = {{1: {{""name"": ""Item"", ""price"": 100, ""discount"": 0}}}}
+
+@app.route('/product/<int:id>', methods=['PATCH'])
+def update_product(id):
+    for key, value in request.json.items():
+        products[id][key] = value
+    return jsonify(products[id])
+
+if __name__ == '__main__':
+    app.run()"
+172,Broken Authentication,Weak Password Policy,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if len(password) >= 4:
+        save_user(username, password)
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Password too short""}})
+
+if __name__ == '__main__':
+    app.run()"
+173,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_role(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or user.get('role') != role:
+                return jsonify({{""error"": ""Forbidden""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/admin/users', methods=['GET'])
+@require_role('admin')
+def list_all_users():
+    return jsonify(users)
+
+if __name__ == '__main__':
+    app.run()"
+174,Improper Inventory Management,Deprecated Endpoint Active,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/login', methods=['POST'])
+def old_login():
+    # Deprecated: uses weak auth
+    if request.json['pass'] == 'admin':
+        return jsonify({{""token"": ""weak_token""}})
+    return jsonify({{""error"": ""Invalid""}}), 401
+
+@app.route('/api/v2/login', methods=['POST'])
+def new_login():
+    return authenticate_properly(request.json)
+
+if __name__ == '__main__':
+    app.run()"
+175,Unsafe Consumption of APIs,Trusting External Data,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/product/<id>')
+def get_product(id):
+    response = requests.get(f'https://partner-api.com/products/{{id}}')
+    product = response.json()
+    
+    # Directly using external data in SQL
+    database.execute(f""INSERT INTO products VALUES ('{{product['name']}}', {{product['price']}})"")
+    return jsonify(product)
+
+if __name__ == '__main__':
+    app.run()"
+176,Broken Authentication,Insecure Session Management,Error,"from flask import Flask, request, session
+app = Flask(__name__)
+app.secret_key = 'secret'
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    session['user'] = username
+    session['logged_in'] = True
+    return ""Logged in""
+
+@app.route('/dashboard')
+def dashboard():
+    if session.get('logged_in'):
+        return f""Welcome {{session['user']}}""
+    return ""Please login""
+
+if __name__ == '__main__':
+    app.run()"
+177,Broken Authentication,Insecure Session Management,Error,"from flask import Flask, request, jsonify, session
+import hashlib
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# User data for demonstration purposes
+users = {
+    'user1': 'password1',
+    'user2': 'password2'
+}
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
+
+    if username in users and users[username] == password:
+        # Predictable session ID
+        session_id = hashlib.md5(username.encode()).hexdigest()
+        session['user'] = session_id
+        return jsonify({""message"": ""Login successful!"", ""session_id"": session_id}), 200
+    else:
+        return jsonify({""message"": ""Invalid credentials""}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+178,Broken Function Level Authorization,No Authorization Check,Good,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# Simulating a user database
+users = {
+    'user1': {'username': 'user1', 'password': 'password1', 'role': 'user'},
+    'admin': {'username': 'admin', 'password': 'adminpass', 'role': 'admin'}
+}
+
+# Simulated login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    user = users.get(username)
+    if user and user['password'] == password:
+        session['username'] = username
+        session['role'] = user['role']
+        return jsonify({'message': 'Logged in successfully!'})
+    return jsonify({'message': 'Invalid credentials!'}), 401
+
+# Admin function with role check
+@app.route('/admin/delete_user', methods=['POST'])
+def delete_user():
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'message': 'Unauthorized!'}), 401
+
+    user_to_delete = request.json.get('username')
+    if user_to_delete in users:
+        del users[user_to_delete]
+        return jsonify({'message': f'User {user_to_delete} deleted successfully!'})
+    return jsonify({'message': 'User not found!'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+179,Improper Inventory Management,Insufficient Authentication and Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+import jwt
+import datetime
+
+app = Flask(__name__)
+
+# Secret key for JWT encoding/decoding
+SECRET_KEY = 'your_secret_key'
+
+# Example of a token for an admin (for demonstration purposes)
+admin_token = jwt.encode({'role': 'admin', 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, SECRET_KEY, algorithm='HS256')
+
+inventory = {
+    'item1': 100,
+    'item2': 50,
+    'item3': 75
+}
+
+def token_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            if data['role'] != 'admin':
+                return jsonify({'error': 'Permission denied'}), 403
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/add_item', methods=['POST'])
+@token_required
+def add_item():
+    data = request.get_json()
+    item_name = data.get('item_name')
+    quantity = data.get('quantity')
+
+    if item_name and quantity:
+        inventory[item_name] = quantity
+        return jsonify({'message': 'Item added to inventory'}), 200
+    else:
+        return jsonify({'error': 'Invalid input data'}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+180,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask, jsonify
+import os
+import logging
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+logging.basicConfig(level=logging.ERROR)
+
+@app.errorhandler(Exception)
+def handle_error(e):
+    logging.error(f""Error: {{e}}"")
+    return jsonify({{""error"": ""An error occurred""}}), 500
+
+@app.route('/user/<int:id>')
+def get_user(id):
+    user = database.get_user(id)
+    return jsonify(user)
+
+if __name__ == '__main__':
+    app.run()"
+181,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+import os
+app = Flask(__name__)
+
+ALLOWED_EXTENSIONS = {{'png', 'jpg', 'jpeg', 'gif'}}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({{""error"": ""No file""}}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({{""error"": ""Invalid file type""}}), 400
+    
+    file.seek(0, os.SEEK_END)
+    if file.tell() > MAX_FILE_SIZE:
+        return jsonify({{""error"": ""File too large""}}), 400
+    file.seek(0)
+    
+    secure_filename = werkzeug.utils.secure_filename(file.filename)
+    file.save(os.path.join('/uploads', secure_filename))
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+182,Broken Function Level Authorization,Missing Role Check in URL Routing,Good,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# Simulating a user database
+users = {
+    'user1': {'username': 'user1', 'password': 'password1', 'role': 'user'},
+    'admin': {'username': 'admin', 'password': 'adminpass', 'role': 'admin'}
+}
+
+# Simulated login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    user = users.get(username)
+    if user and user['password'] == password:
+        session['username'] = username
+        session['role'] = user['role']
+        return jsonify({'message': 'Logged in successfully!'})
+    return jsonify({'message': 'Invalid credentials!'}), 401
+
+# Role check added to the endpoint
+@app.route('/admin/update_user/<username>', methods=['POST'])
+def update_user(username):
+    if 'username' not in session:
+        return jsonify({'message': 'Unauthorized!'}), 401
+    
+    if session.get('role') != 'admin':
+        return jsonify({'message': 'Forbidden! You do not have the required role.'}), 403
+
+    new_data = request.json
+    if username in users:
+        users[username].update(new_data)
+        return jsonify({'message': f'User {username} updated successfully!'})
+    return jsonify({'message': 'User not found!'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+183,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+184,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@example.com""}},
+         2: {{""name"": ""Bob"", ""email"": ""bob@example.com""}}}}
+api_keys = {{""key_alice"": 1, ""key_bob"": 2}}
+
+def get_user_from_token(token):
+    return api_keys.get(token)
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({{""error"": ""Missing authorization""}}), 401
+    
+    requesting_user = get_user_from_token(token)
+    if requesting_user != user_id:
+        return jsonify({{""error"": ""Unauthorized""}}), 403
+    
+    user = users.get(user_id)
+    if user:
+        return jsonify(user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+185,Improper Inventory Management,Exposed Internal Endpoints,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/internal/users')
+def internal_users():
+    return jsonify(database.get_all_internal_users())
+
+@app.route('/api/v2/users')
+def v2_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/beta/experimental')
+def beta_endpoint():
+    return jsonify({{""data"": ""experimental feature""}})
+
+if __name__ == '__main__':
+    app.run()"
+186,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+MAX_LIMIT = 100
+DEFAULT_LIMIT = 20
+
+@app.route('/items', methods=['GET'])
+def get_items():
+    page = max(1, int(request.args.get('page', 1)))
+    limit = min(MAX_LIMIT, int(request.args.get('limit', DEFAULT_LIMIT)))
+    offset = (page - 1) * limit
+    
+    items = database.query(f""SELECT * FROM items LIMIT {{limit}} OFFSET {{offset}}"")
+    total = database.count(""items"")
+    
+    return jsonify({{
+        ""items"": items,
+        ""page"": page,
+        ""limit"": limit,
+        ""total"": total
+    }})
+
+if __name__ == '__main__':
+    app.run()"
+187,Improper Inventory Management,Deprecated Endpoint Active,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/login', methods=['POST'])
+def old_login():
+    # Deprecated: uses weak auth
+    if request.json['pass'] == 'admin':
+        return jsonify({{""token"": ""weak_token""}})
+    return jsonify({{""error"": ""Invalid""}}), 401
+
+@app.route('/api/v2/login', methods=['POST'])
+def new_login():
+    return authenticate_properly(request.json)
+
+if __name__ == '__main__':
+    app.run()"
+188,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+189,Broken Object Level Authorization,Unfiltered Resource Access,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+database = {1: {""owner"": 1, ""content"": ""Private data""},
+              2: {""owner"": 2, ""content"": ""Secret info""}}
+
+@app.route('/api/account/<int:user_id>', methods=['PUT'])
+def update_account(user_id):
+    if user_id in database:
+        database[user_id].update(request.json)
+        return jsonify({""success"": ""Updated""})
+    return jsonify({""error"": ""Not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+190,Improper Inventory Management,Lack of Input Validation,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+inventory = {
+    'item1': 100,
+    'item2': 50,
+    'item3': 75
+}
+
+@app.route('/update_inventory', methods=['POST'])
+def update_inventory():
+    data = request.get_json()
+
+    item_name = data.get('item_name')
+    quantity = data.get('quantity')
+
+    if item_name and quantity:
+        if item_name in inventory:
+            inventory[item_name] += quantity  # Vulnerable code: No input validation
+            return jsonify({'message': 'Inventory updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Item not found in inventory'}), 404
+    else:
+        return jsonify({'error': 'Invalid input data'}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+191,Broken Object Property Level Authorization,Sensitive Data Exposure,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc123"", ""ssn"": ""123-45-6789""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    return jsonify(users.get(user_id, {{}}))
+
+if __name__ == '__main__':
+    app.run()"
+192,Unsafe Consumption of APIs,Insufficient Authentication Check,Error,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/secure_api', methods=['POST'])
+def secure_api():
+    api_key = request.headers.get('X-API-Key')
+    if not api_key:
+        return jsonify({'error': 'Unauthorized access'}), 401
+
+    user_input = request.json.get('user_input')
+
+    # Assume this endpoint consumes an authenticated external API
+    response = requests.post(
+        'https://external.api.com/data',
+        headers={'X-API-Key': api_key},
+        json={'user_input': user_input}
+    )
+
+    return jsonify(response.json()), 200"
+193,Security Misconfiguration,Verbose Error Messages,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/user/<int:id>')
+def get_user(id):
+    try:
+        user = database.get_user(id)
+        return jsonify(user)
+    except Exception as e:
+        return jsonify({{""error"": str(e), ""traceback"": traceback.format_exc()}}), 500
+
+if __name__ == '__main__':
+    app.run()"
+194,Server Side Request Forgery,SSRF with Redirects,Error,"from flask import Flask, request, jsonify
+import urllib.request
+app = Flask(__name__)
+
+@app.route('/proxy', methods=['GET'])
+def proxy():
+    url = request.args.get('url')
+    with urllib.request.urlopen(url) as response:
+        return response.read()
+
+if __name__ == '__main__':
+    app.run()"
+195,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask
+import os
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['DEBUG'] = False
+app.config['TESTING'] = False
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = ""default-src 'self'""
+    return response
+
+@app.route('/')
+def home():
+    return ""Hello World""
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1')"
+196,Security Misconfiguration,Default Secret Key,Error,"from flask import Flask, session
+app = Flask(__name__)
+app.secret_key = 'secret'
+
+@app.route('/login')
+def login():
+    session['user'] = 'admin'
+    return ""Logged in""
+
+if __name__ == '__main__':
+    app.run()"
+197,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+import os
+app = Flask(__name__)
+
+EXTERNAL_API_KEY = os.environ.get('EXTERNAL_API_KEY')
+TRUSTED_HOSTS = ['api.trusted-partner.com']
+
+@app.route('/external-data')
+def get_external():
+    try:
+        response = requests.get(
+            'https://api.trusted-partner.com/data',
+            headers={{'Authorization': f'Bearer {{EXTERNAL_API_KEY}}'}},
+            timeout=10,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        validated_data = validate_and_sanitize(data)
+        return jsonify(validated_data)
+    except Exception as e:
+        logging.error(f""External API error: {{e}}"")
+        return jsonify({{""error"": ""Service unavailable""}}), 503
+
+if __name__ == '__main__':
+    app.run()"
+198,Improper Inventory Management,Deprecated Endpoint Active,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/login', methods=['POST'])
+def old_login():
+    # Deprecated: uses weak auth
+    if request.json['pass'] == 'admin':
+        return jsonify({{""token"": ""weak_token""}})
+    return jsonify({{""error"": ""Invalid""}}), 401
+
+@app.route('/api/v2/login', methods=['POST'])
+def new_login():
+    return authenticate_properly(request.json)
+
+if __name__ == '__main__':
+    app.run()"
+199,Unrestricted Access to Sensitive Business Flows,Protected Business Flow,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = authenticate_request(request)
+        if not user:
+            return jsonify({{""error"": ""Unauthorized""}}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+def require_2fa(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        otp = request.headers.get('X-OTP')
+        if not verify_otp(get_current_user(), otp):
+            return jsonify({{""error"": ""2FA required""}}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/transfer', methods=['POST'])
+@require_auth
+@require_2fa
+def transfer_money():
+    user = get_current_user()
+    from_account = request.json['from']
+    
+    if not user_owns_account(user, from_account):
+        return jsonify({{""error"": ""Forbidden""}}), 403
+    
+    amount = request.json['amount']
+    if amount > get_daily_limit(user):
+        return jsonify({{""error"": ""Exceeds daily limit""}}), 400
+    
+    execute_transfer(from_account, request.json['to'], amount)
+    log_transaction(user, from_account, request.json['to'], amount)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+200,Improper Inventory Management,Insufficient Authentication and Authorization,Error,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+admin_token = 'secret_admin_token'
+
+inventory = {
+    'item1': 100,
+    'item2': 50,
+    'item3': 75
+}
+
+@app.route('/add_item', methods=['POST'])
+def add_item():
+    token = request.headers.get('Authorization')
+
+    if token == admin_token:
+        data = request.get_json()
+        item_name = data.get('item_name')
+        quantity = data.get('quantity')
+
+        if item_name and quantity:
+            inventory[item_name] = quantity  # Vulnerable code: No further authorization checks
+            return jsonify({'message': 'Item added to inventory'}), 200
+        else:
+            return jsonify({'error': 'Invalid input data'}), 400
+    else:
+        return jsonify({'error': 'Unauthorized access'}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+201,Unsafe Consumption of APIs,Lack of Input Validation,Error,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/vulnerable_api', methods=['POST'])
+def vulnerable_api():
+    user_input = request.json.get('user_input')
+
+    # Assume this endpoint consumes an external API
+    response = requests.get(f'https://external.api.com/data/{user_input}')
+
+    return jsonify(response.json()), 200"
+202,Broken Authentication,Insecure Session Management,Error,"from flask import Flask, request, session
+app = Flask(__name__)
+app.secret_key = 'secret'
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    session['user'] = username
+    session['logged_in'] = True
+    return ""Logged in""
+
+@app.route('/dashboard')
+def dashboard():
+    if session.get('logged_in'):
+        return f""Welcome {{session['user']}}""
+    return ""Please login""
+
+if __name__ == '__main__':
+    app.run()"
+203,Unrestricted Access to Sensitive Business Flows,Sensitive Data Export Function Accessible Without Authorization,Good,"from flask import Flask, send_file, request, Response
+import csv
+import functools
+
+app = Flask(__name__)
+
+# Dictionary to store username and password
+users = {
+    'admin': 'password123'
+}
+
+def check_auth(username, password):
+    """"""Check if a username/password combination is valid.""""""
+    return username in users and users[username] == password
+
+def authenticate():
+    """"""Send a 401 response to enable basic auth""""""
+    return Response(
+        'Could not verify your access level for that URL.\n'
+        'You have to login with proper credentials', 401,
+        {'WWW-Authenticate': 'Basic realm=""Login Required""'})
+
+def requires_auth(f):
+    """"""Decorator to prompt for basic auth""""""
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/export-data', methods=['GET'])
+@requires_auth
+def export_data():
+    # Simulate creating a CSV file with sensitive data
+    with open('sensitive_data.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['ID', 'Name', 'Sensitive Info'])
+        writer.writerow([1, 'John Doe', 'Secret1'])
+        writer.writerow([2, 'Jane Smith', 'Secret2'])
+
+    return send_file('sensitive_data.csv', as_attachment=True)
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+204,Improper Inventory Management,Insecure Direct Object Reference (IDOR),Good,"from flask import Flask, request, jsonify, abort
+from functools import wraps
+
+app = Flask(__name__)
+
+# Sample inventory
+inventory = {
+    'item1': 100,
+    'item2': 50,
+    'item3': 75
+}
+
+# Basic authentication credentials (username:password)
+AUTHORIZED_USERS = {
+    'user1': 'password123'
+}
+
+def check_auth(username, password):
+    return AUTHORIZED_USERS.get(username) == password
+
+def authenticate():
+    return jsonify({'error': 'Authentication required'}), 401
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/get_inventory/<item_name>', methods=['GET'])
+@requires_auth
+def get_inventory(item_name):
+    # Basic validation of item_name
+    if not item_name.isalnum() or len(item_name) > 50:
+        return jsonify({'error': 'Invalid item name'}), 400
+
+    if item_name in inventory:
+        return jsonify({'item_name': item_name, 'quantity': inventory[item_name]}), 200
+    else:
+        return jsonify({'error': 'Item not found in inventory'}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+205,Improper Inventory Management,Exposed Internal Endpoints,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/internal/users')
+def internal_users():
+    return jsonify(database.get_all_internal_users())
+
+@app.route('/api/v2/users')
+def v2_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/beta/experimental')
+def beta_endpoint():
+    return jsonify({{""data"": ""experimental feature""}})
+
+if __name__ == '__main__':
+    app.run()"
+206,Unrestricted Access to Sensitive Business Flows,Admin Operation Without Verification,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/admin/reset-password', methods=['POST'])
+def reset_password():
+    user_id = request.json['user_id']
+    new_password = request.json['new_password']
+    database.update_password(user_id, new_password)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+207,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+from marshmallow import Schema, fields, ValidationError
+app = Flask(__name__)
+
+class UserSchema(Schema):
+    username = fields.Str(required=True, validate=lambda x: len(x) <= 50)
+    email = fields.Email(required=True)
+    
+user_schema = UserSchema()
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    try:
+        response = requests.get(
+            f'https://external-api.com/users/{{username}}',
+            timeout=5,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        user_data = user_schema.load(response.json())
+        database.save_user_safe(user_data)
+        return jsonify(user_data)
+    except ValidationError as e:
+        return jsonify({{""error"": ""Invalid data from external API""}}), 400
+    except requests.RequestException as e:
+        return jsonify({{""error"": ""External API error""}}), 502
+
+if __name__ == '__main__':
+    app.run()"
+208,Security Misconfiguration,Debug Mode Enabled,Error,"from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return ""Hello World""
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')"
+209,Security Misconfiguration,Missing Security Headers,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+@app.route('/api/data')
+def get_data():
+    response = jsonify({{""data"": ""sensitive""}})
+    return response
+
+if __name__ == '__main__':
+    app.run()"
+210,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+import os
+app = Flask(__name__)
+
+ALLOWED_EXTENSIONS = {{'png', 'jpg', 'jpeg', 'gif'}}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({{""error"": ""No file""}}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({{""error"": ""Invalid file type""}}), 400
+    
+    file.seek(0, os.SEEK_END)
+    if file.tell() > MAX_FILE_SIZE:
+        return jsonify({{""error"": ""File too large""}}), 400
+    file.seek(0)
+    
+    secure_filename = werkzeug.utils.secure_filename(file.filename)
+    file.save(os.path.join('/uploads', secure_filename))
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+211,Security Misconfiguration,Debug Mode Enabled in Production,Good,"from flask import Flask
+import os
+
+app = Flask(__name__)
+
+# Set the debug mode based on the FLASK_ENV environment variable
+if os.getenv('FLASK_ENV') == 'development':
+    app.config['DEBUG'] = True
+else:
+    app.config['DEBUG'] = False
+
+@app.route('/')
+def home():
+    return ""Welcome to the home page!""
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)"
+212,Unrestricted Access to Sensitive Business Flows,Unrestricted Data Export,Error,"from flask import Flask, request, send_file
+app = Flask(__name__)
+
+@app.route('/export', methods=['GET'])
+def export_data():
+    format = request.args.get('format', 'csv')
+    data = database.export_all_data()
+    return send_file(create_export(data, format))
+
+if __name__ == '__main__':
+    app.run()"
+213,Unsafe Consumption of APIs,No Input Validation,Error,"from flask import Flask, jsonify
+import requests
+app = Flask(__name__)
+
+@app.route('/user-info/<username>')
+def get_external_user(username):
+    response = requests.get(f'https://external-api.com/users/{{username}}')
+    user_data = response.json()
+    database.save_user(user_data)
+    return jsonify(user_data)
+
+if __name__ == '__main__':
+    app.run()"
+214,Broken Object Level Authorizatio,Inadequate User Validation,Good,"from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Mock user data
+users = {
+    1: {""name"": ""Alice"", ""email"": ""alice@example.com""},
+    2: {""name"": ""Bob"", ""email"": ""bob@example.com""}
+}
+
+# Mock API keys for users
+api_keys = {
+    ""key_for_alice"": 1,
+    ""key_for_bob"": 2
+}
+
+def get_user_id_from_api_key(api_key):
+    return api_keys.get(api_key)
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    api_key = request.headers.get('X-API-Key')
+    if not api_key:
+        return jsonify({""error"": ""Missing API key""}), 401
+
+    requesting_user_id = get_user_id_from_api_key(api_key)
+    if not requesting_user_id:
+        return jsonify({""error"": ""Invalid API key""}), 403
+
+    if requesting_user_id != user_id:
+        return jsonify({""error"": ""Unauthorized access""}), 403
+
+    user = users.get(user_id)
+    if user:
+        return jsonify(user)
+    else:
+        return jsonify({""error"": ""User not found""}), 404
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+215,Unsafe Consumption of APIs,Insecure Data Transmission,Error,"from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route('/transmit_data', methods=['POST'])
+def transmit_data():
+    user_input = request.json.get('user_input')
+
+    # Assume this endpoint transmits user input to an external API insecurely
+    response = requests.post(
+        'http://insecure.api.com/transmit',
+        json={'data': user_input}
+    )
+
+    return jsonify(response.json()), 200"
+216,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_permission(permission):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or permission not in user.get('permissions', []):
+                return jsonify({{""error"": ""Permission denied""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/api/settings', methods=['PUT'])
+@require_permission('settings:write')
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+217,Unrestricted Resource Consumption,Proper Resource Limits,Good,"from flask import Flask, request, jsonify
+import os
+app = Flask(__name__)
+
+ALLOWED_EXTENSIONS = {{'png', 'jpg', 'jpeg', 'gif'}}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({{""error"": ""No file""}}), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({{""error"": ""Invalid file type""}}), 400
+    
+    file.seek(0, os.SEEK_END)
+    if file.tell() > MAX_FILE_SIZE:
+        return jsonify({{""error"": ""File too large""}}), 400
+    file.seek(0)
+    
+    secure_filename = werkzeug.utils.secure_filename(file.filename)
+    file.save(os.path.join('/uploads', secure_filename))
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+218,Broken Function Level Authorization,Proper Function Authorization,Good,"from flask import Flask, request, jsonify
+from functools import wraps
+app = Flask(__name__)
+
+def require_permission(permission):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            user = get_current_user()
+            if not user or permission not in user.get('permissions', []):
+                return jsonify({{""error"": ""Permission denied""}}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+@app.route('/api/settings', methods=['PUT'])
+@require_permission('settings:write')
+def update_settings():
+    settings = request.json
+    database.update_settings(settings)
+    return jsonify({{""success"": True}})
+
+if __name__ == '__main__':
+    app.run()"
+219,Broken Object Property Level Authorization,Mass Assignment,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""role"": ""user"", ""balance"": 100}}}}
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if user_id in users:
+        users[user_id].update(request.json)
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+220,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+limiter = Limiter(app, key_func=get_remote_address)
+
+@app.route('/login', methods=['POST'])
+@limiter.limit(""5 per minute"")
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    user = authenticate_user(username, password)
+    if user:
+        return jsonify({{""token"": create_jwt_token(user)}})
+    return jsonify({{""error"": ""Invalid credentials""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+221,Broken Object Property Level Authorization,Proper Field Filtering,Good,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+SAFE_FIELDS = ['name', 'email', 'created_at']
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc"", ""ssn"": ""123""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = users.get(user_id)
+    if user:
+        safe_user = {{k: v for k, v in user.items() if k in SAFE_FIELDS}}
+        return jsonify(safe_user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+222,Broken Authentication,Missing Rate Limiting,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{""admin"": ""secret123"", ""user"": ""pass456""}}
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    
+    if users.get(username) == password:
+        return jsonify({{""success"": True, ""token"": generate_token()}})
+    return jsonify({{""error"": ""Invalid""}})
+
+if __name__ == '__main__':
+    app.run()"
+223,Security Misconfiguration,Secure Configuration,Good,"from flask import Flask, jsonify
+import os
+import logging
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+logging.basicConfig(level=logging.ERROR)
+
+@app.errorhandler(Exception)
+def handle_error(e):
+    logging.error(f""Error: {{e}}"")
+    return jsonify({{""error"": ""An error occurred""}}), 500
+
+@app.route('/user/<int:id>')
+def get_user(id):
+    user = database.get_user(id)
+    return jsonify(user)
+
+if __name__ == '__main__':
+    app.run()"
+224,Broken Object Level Authorization,Proper Authorization Check,Good,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+users = {{1: {{""name"": ""Alice"", ""email"": ""alice@example.com""}},
+         2: {{""name"": ""Bob"", ""email"": ""bob@example.com""}}}}
+api_keys = {{""key_alice"": 1, ""key_bob"": 2}}
+
+def get_user_from_token(token):
+    return api_keys.get(token)
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({{""error"": ""Missing authorization""}}), 401
+    
+    requesting_user = get_user_from_token(token)
+    if requesting_user != user_id:
+        return jsonify({{""error"": ""Unauthorized""}}), 403
+    
+    user = users.get(user_id)
+    if user:
+        return jsonify(user)
+    return jsonify({{""error"": ""Not found""}}), 404
+
+if __name__ == '__main__':
+    app.run()"
+225,Improper Inventory Management,Proper API Versioning,Good,"from flask import Flask, jsonify, request
+from functools import wraps
+import os
+app = Flask(__name__)
+
+ACTIVE_VERSIONS = ['v2', 'v3']
+
+def version_check(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        version = request.path.split('/')[2] if len(request.path.split('/')) > 2 else None
+        if version not in ACTIVE_VERSIONS:
+            return jsonify({{""error"": ""API version deprecated or not found""}}), 404
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/api/v2/users')
+@version_check
+def get_users():
+    return jsonify(database.get_users())
+
+@app.route('/api/v3/users')
+@version_check  
+def get_users_v3():
+    return jsonify(database.get_users_paginated())
+
+if __name__ == '__main__':
+    app.run()"
+226,Improper Inventory Management,Deprecated Endpoint Active,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/v1/login', methods=['POST'])
+def old_login():
+    # Deprecated: uses weak auth
+    if request.json['pass'] == 'admin':
+        return jsonify({{""token"": ""weak_token""}})
+    return jsonify({{""error"": ""Invalid""}}), 401
+
+@app.route('/api/v2/login', methods=['POST'])
+def new_login():
+    return authenticate_properly(request.json)
+
+if __name__ == '__main__':
+    app.run()"
+227,Unrestricted Resource Consumption,Unrestricted File Upload,Error,"from flask import Flask, request
+app = Flask(__name__)
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files['file']
+    file.save(f'/uploads/{{file.filename}}')
+    return ""Uploaded""
+
+if __name__ == '__main__':
+    app.run()"
+228,Unsafe Consumption of APIs,Validated External API Usage,Good,"from flask import Flask, jsonify
+import requests
+import os
+app = Flask(__name__)
+
+EXTERNAL_API_KEY = os.environ.get('EXTERNAL_API_KEY')
+TRUSTED_HOSTS = ['api.trusted-partner.com']
+
+@app.route('/external-data')
+def get_external():
+    try:
+        response = requests.get(
+            'https://api.trusted-partner.com/data',
+            headers={{'Authorization': f'Bearer {{EXTERNAL_API_KEY}}'}},
+            timeout=10,
+            verify=True
+        )
+        response.raise_for_status()
+        
+        data = response.json()
+        validated_data = validate_and_sanitize(data)
+        return jsonify(validated_data)
+    except Exception as e:
+        logging.error(f""External API error: {{e}}"")
+        return jsonify({{""error"": ""Service unavailable""}}), 503
+
+if __name__ == '__main__':
+    app.run()"
+229,Unrestricted Access to Sensitive Business Flows,Sensitive Data Export Function Accessible Without Authorization,Error,"from flask import Flask, send_file
+import csv
+
+app = Flask(__name__)
+
+@app.route('/export-data', methods=['GET'])
+def export_data():
+    # Simulate creating a CSV file with sensitive data
+    with open('sensitive_data.csv', mode='w') as file:
+        writer = csv.writer(file)
+        writer.writerow(['ID', 'Name', 'Sensitive Info'])
+        writer.writerow([1, 'John Doe', 'Secret1'])
+        writer.writerow([2, 'Jane Smith', 'Secret2'])
+
+    return send_file('sensitive_data.csv', as_attachment=True)
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+230,Security Misconfiguration,Debug Mode Enabled,Error,"from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return ""Hello World""
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')"
+231,Broken Object Level Authorization,Inadequate User Validation,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+users = [
+    {""id"": 1, ""user_id"": 1, ""data"": ""User 1 private""},
+    {""id"": 2, ""user_id"": 2, ""data"": ""User 2 private""}
+]
+
+@app.route('/account', methods=['GET'])
+def list_users():
+    return jsonify(users)
+
+if __name__ == '__main__':
+    app.run()"
+232,Broken Object Property Level Authorization,Sensitive Data Exposure,Error,"from flask import Flask, jsonify
+app = Flask(__name__)
+
+users = {{
+    1: {{""name"": ""Alice"", ""email"": ""alice@test.com"", ""password_hash"": ""abc123"", ""ssn"": ""123-45-6789""}}
+}}
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    return jsonify(users.get(user_id, {{}}))
+
+if __name__ == '__main__':
+    app.run()"
+233,Broken Function Level Authorization,Insecure Direct Object References,Error,"from flask import Flask, request, jsonify, session
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'
+
+# Simulating a user database
+users = {
+    'user1': {'username': 'user1', 'password': 'password1', 'role': 'user'},
+    'admin': {'username': 'admin', 'password': 'adminpass', 'role': 'admin'}
+}
+
+# Simulated login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    user = users.get(username)
+    if user and user['password'] == password:
+        session['username'] = username
+        session['role'] = user['role']
+        return jsonify({'message': 'Logged in successfully!'})
+    return jsonify({'message': 'Invalid credentials!'}), 401
+
+# Vulnerable endpoint accessible by role manipulation
+@app.route('/admin/get_all_users', methods=['GET'])
+def get_all_users():
+    role = request.args.get('role')
+    if role == 'admin':
+        return jsonify({'users': list(users.keys())})
+    return jsonify({'message': 'Unauthorized!'}), 401
+
+if __name__ == '__main__':
+    app.run(debug=True)"
+234,Broken Authentication,Token Exposure in URL,Error,"from flask import Flask, request, jsonify
+app = Flask(__name__)
+
+@app.route('/api/data')
+def get_data():
+    token = request.args.get('token')
+    if validate_token(token):
+        return jsonify({{""data"": ""sensitive info""}})
+    return jsonify({{""error"": ""Invalid token""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
+235,Server Side Request Forgery,URL Validation and Allowlist,Good,"from flask import Flask, request, jsonify
+import requests
+from urllib.parse import urlparse
+app = Flask(__name__)
+
+ALLOWED_HOSTS = ['api.trusted.com', 'cdn.example.com']
+
+def is_safe_url(url):
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            return False
+        if parsed.hostname not in ALLOWED_HOSTS:
+            return False
+        if parsed.port and parsed.port not in [80, 443]:
+            return False
+        return True
+    except:
+        return False
+
+@app.route('/fetch', methods=['POST'])
+def fetch_url():
+    url = request.json.get('url')
+    
+    if not is_safe_url(url):
+        return jsonify({{""error"": ""URL not allowed""}}), 400
+    
+    response = requests.get(url, allow_redirects=False, timeout=5)
+    return jsonify({{""content"": response.text}})
+
+if __name__ == '__main__':
+    app.run()"
+236,Broken Authentication,Secure Authentication Implementation,Good,"from flask import Flask, request, session, jsonify
+from datetime import timedelta
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
+@app.route('/login', methods=['POST'])
+def login():
+    if authenticate(request.json):
+        session.permanent = True
+        session['user_id'] = request.json['user_id']
+        session.regenerate()
+        return jsonify({{""success"": True}})
+    return jsonify({{""error"": ""Failed""}}), 401
+
+if __name__ == '__main__':
+    app.run()"
