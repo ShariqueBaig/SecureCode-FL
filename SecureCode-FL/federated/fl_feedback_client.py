@@ -78,6 +78,20 @@ class FeedbackTrainer:
         if vectorizer_path and os.path.exists(vectorizer_path):
             self.vectorizer = joblib.load(vectorizer_path)
             print(f"✓ Loaded vectorizer from: {vectorizer_path}")
+            
+            # Check if model input matches vectorizer output
+            vectorizer_features = len(self.vectorizer.get_feature_names_out())
+            model_input_dim = self.model.input_shape[-1]
+            
+            if vectorizer_features != model_input_dim:
+                print(f"ℹ Dimension note: model expects {model_input_dim}, vectorizer has {vectorizer_features}")
+                print(f"  Will pad features during training (fine-tuning mode)")
+                # Store dimensions for padding during vectorization
+                self.model_input_dim = model_input_dim
+                self.vectorizer_features = vectorizer_features
+            else:
+                self.model_input_dim = model_input_dim
+                self.vectorizer_features = vectorizer_features
         else:
             self.vectorizer = None
             print("⚠ No vectorizer found - will need to create one")
@@ -121,6 +135,7 @@ class FeedbackTrainer:
     def vectorize_code(self, code_snippets: List[str]) -> np.ndarray:
         """
         Convert code snippets to TF-IDF feature vectors.
+        Pads features to match model input dimension if needed.
         
         Args:
             code_snippets: List of code strings
@@ -132,7 +147,15 @@ class FeedbackTrainer:
             raise ValueError("No vectorizer loaded - cannot vectorize code")
         
         features = self.vectorizer.transform(code_snippets).toarray()
-        return features.astype(np.float32)
+        features = features.astype(np.float32)
+        
+        # Pad features to match model input dimension if needed
+        if hasattr(self, 'model_input_dim') and features.shape[1] < self.model_input_dim:
+            padding_size = self.model_input_dim - features.shape[1]
+            print(f"  Padding features: {features.shape[1]} → {self.model_input_dim} (adding {padding_size} zeros)")
+            features = np.pad(features, ((0, 0), (0, padding_size)), mode='constant', constant_values=0)
+        
+        return features
     
     def train_on_feedback(
         self, 
