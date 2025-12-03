@@ -51,7 +51,7 @@ export class FeedbackManager {
         }
 
         const selectedText = editor.document.getText(selection);
-        
+
         // Get notes from user
         const notes = await vscode.window.showInputBox({
             prompt: 'Why is this a false positive? (optional)',
@@ -60,8 +60,8 @@ export class FeedbackManager {
 
         // Get the original detection from diagnostics at this location
         const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-        const relevantDiagnostic = diagnostics.find(d => 
-            d.source === 'SecureCode-FL' && 
+        const relevantDiagnostic = diagnostics.find(d =>
+            d.source === 'SecureCode-FL' &&
             selection.contains(d.range)
         );
 
@@ -162,8 +162,8 @@ export class FeedbackManager {
         // Get diagnostics at cursor position
         const position = editor.selection.active;
         const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-        const relevantDiagnostics = diagnostics.filter(d => 
-            d.source === 'SecureCode-FL' && 
+        const relevantDiagnostics = diagnostics.filter(d =>
+            d.source === 'SecureCode-FL' &&
             d.range.contains(position)
         );
 
@@ -211,7 +211,7 @@ export class FeedbackManager {
     async showFeedbackStats(): Promise<void> {
         try {
             const stats = await this.serverClient.getFeedbackStats();
-            
+
             const message = [
                 `📊 Feedback Statistics`,
                 ``,
@@ -237,7 +237,7 @@ export class FeedbackManager {
     private async submitFeedback(data: FeedbackData, feedbackType: string): Promise<void> {
         try {
             const result = await this.serverClient.submitFeedback(data);
-            
+
             if (result.success) {
                 vscode.window.showInformationMessage(
                     `✅ Thank you! Your ${feedbackType} has been recorded and will help improve the model.`

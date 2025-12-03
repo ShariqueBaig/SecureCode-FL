@@ -114,9 +114,9 @@ async function scanCurrentFile() {
 async function scanDocument(document: vscode.TextDocument, showNotification: boolean = false) {
     try {
         updateStatusBar('$(sync~spin) Scanning...', 'Scanning for vulnerabilities...');
-        
+
         const vulnerabilities = await scanner.scanDocument(document);
-        
+
         if (vulnerabilities.length === 0) {
             updateStatusBar('$(shield) Secure', 'No vulnerabilities detected');
             if (showNotification) {
@@ -160,7 +160,7 @@ async function scanWorkspace() {
         cancellable: true
     }, async (progress, token) => {
         let totalVulnerabilities = 0;
-        
+
         for (let i = 0; i < files.length; i++) {
             if (token.isCancellationRequested) {
                 break;
@@ -197,7 +197,7 @@ async function scanWorkspace() {
 
 function toggleRealTimeScanning() {
     realTimeScanningEnabled = !realTimeScanningEnabled;
-    
+
     if (realTimeScanningEnabled) {
         vscode.window.showInformationMessage('Real-time scanning enabled');
         updateStatusBar('$(shield) SecureCode-FL', 'Real-time scanning enabled');

@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code Extension - node_modules
+**/node_modules/
+**/out/
+**/*.vsix
+**/.vscode-test/
+
+# TensorFlow
+*.h5
+
+# Large files
+*.pkl
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.bak

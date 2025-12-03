@@ -62,7 +62,7 @@ export class ServerClient {
 
     constructor() {
         const serverUrl = vscode.workspace.getConfiguration('securecode-fl').get('serverUrl', 'http://localhost:5000');
-        
+
         this.client = axios.create({
             baseURL: serverUrl,
             timeout: 60000, // Increased to 60 seconds for ML model inference
@@ -86,7 +86,7 @@ export class ServerClient {
             // First request may take longer due to TensorFlow initialization
             const timeout = this.isFirstRequest ? 90000 : 60000;
             this.isFirstRequest = false;
-            
+
             const response = await this.client.post('/scan', {
                 code: code,
                 language: language,
