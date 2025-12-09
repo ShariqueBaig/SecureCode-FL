@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-12-09T18:45:33.218474",
+  "phase": "Phase 5 - Step 5.1",
+  "test": "Real-Time SHAP Explanations",
+  "test_accuracy": 0.9789473684210527,
+  "vulnerable_explanations": [
+    {
+      "prediction": 0.011356489732861519,
+      "is_vulnerable": 
