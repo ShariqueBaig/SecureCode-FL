@@ -541,7 +541,7 @@ def get_untrained_feedback():
             training_data.append({
                 "id": fb.id,
                 "code": fb.code_snippet,
-                "label": 0 if fb.user_label == "vulnerable" else 1,  # 0=vulnerable, 1=secure
+                "label": 1 if fb.user_label == "vulnerable" else 0,  # 1=vulnerable (Error), 0=secure (Good)
                 "feedback_type": fb.feedback_type,
                 "language": fb.language
             })

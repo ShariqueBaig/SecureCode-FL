@@ -123,8 +123,8 @@ class FeedbackTrainer:
         
         for fb in untrained:
             code_snippets.append(fb.code_snippet)
-            # 0 = vulnerable, 1 = secure (matching the original training format)
-            labels.append(0 if fb.user_label == "vulnerable" else 1)
+            # 1 = vulnerable (Error), 0 = secure (Good) - matching original training format
+            labels.append(1 if fb.user_label == "vulnerable" else 0)
         
         print(f"✓ Loaded {len(untrained)} feedback entries")
         print(f"  - Vulnerable: {labels.count(0)}")
@@ -193,10 +193,22 @@ class FeedbackTrainer:
                 "message": f"Failed to vectorize feedback: {e}"
             }
         
-        print(f"\n🎯 Training on {len(y)} feedback samples...")
+        print(f"\n🎯 Fine-tuning on {len(y)} feedback samples...")
         print(f"   Epochs: {epochs}, Batch size: {batch_size}")
         
-        # Train
+        # Use a very low learning rate for fine-tuning to prevent catastrophic forgetting
+        # This preserves the knowledge from the 471 samples while adapting to user feedback
+        fine_tune_lr = 0.0001  # 10x lower than default 0.001
+        
+        # Recompile model with lower learning rate for fine-tuning
+        self.model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=fine_tune_lr),
+            loss='binary_crossentropy',
+            metrics=['accuracy']
+        )
+        print(f"   Learning rate: {fine_tune_lr} (reduced for fine-tuning)")
+        
+        # Train with early stopping to prevent overfitting
         history = self.model.fit(
             X, y,
             epochs=epochs,

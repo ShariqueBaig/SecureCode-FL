@@ -10,24 +10,28 @@ A VS Code extension for real-time code vulnerability detection powered by **Fede
 ## 🌟 Features
 
 ### 🔍 Real-Time Vulnerability Detection
+
 - Scans Python, JavaScript, TypeScript, Java, C#, and PHP
 - Detects 50+ vulnerability patterns
 - ML-powered detection with 94.7% accuracy
 - OWASP API Top 10 coverage
 
 ### 🔒 Privacy-Preserving Federated Learning
+
 - Your code **never leaves your machine**
 - Only model weights are shared
 - Distributed training across multiple users
 - FedAvg aggregation strategy
 
 ### 💬 User Feedback System
+
 - Mark false positives to improve accuracy
 - Report missed vulnerabilities
 - Confirm correct detections
 - Local training on your corrections
 
 ### 📊 Vulnerability Categories (OWASP API Top 10)
+
 1. Broken Object Level Authorization
 2. Broken Authentication
 3. Broken Object Property Level Authorization
@@ -44,6 +48,7 @@ A VS Code extension for real-time code vulnerability detection powered by **Fede
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.10+
 - Node.js 18+
 - VS Code 1.85+
@@ -51,21 +56,23 @@ A VS Code extension for real-time code vulnerability detection powered by **Fede
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/ShariqueBaig/SecureCode-FL.git
    cd SecureCode-FL
    ```
 
 2. **Set up Python environment**
+
    ```bash
    python -m venv venv
-   
+
    # Windows
    .\venv\Scripts\activate
-   
+
    # Linux/Mac
    source venv/bin/activate
-   
+
    pip install -r requirements.txt
    ```
 
@@ -94,6 +101,7 @@ python inference_server/server.py
 ```
 
 You should see:
+
 ```
 ============================================================
   SecureCode-FL Inference Server
@@ -116,6 +124,7 @@ You should see:
 ### 2. Run the VS Code Extension
 
 1. Open VS Code in the extension folder:
+
    ```bash
    code vscode-extension
    ```
@@ -126,22 +135,22 @@ You should see:
 
 ### 3. Scanning for Vulnerabilities
 
-| Action | How To |
-|--------|--------|
-| **Scan current file** | `Ctrl+Shift+S` or right-click → "SecureCode-FL: Scan Current File" |
-| **Scan workspace** | Command Palette (`Ctrl+Shift+P`) → "SecureCode-FL: Scan Entire Workspace" |
-| **Toggle real-time** | Command Palette → "SecureCode-FL: Toggle Real-Time Scanning" |
-| **View dashboard** | Command Palette → "SecureCode-FL: Show Vulnerability Dashboard" |
+| Action                | How To                                                                    |
+| --------------------- | ------------------------------------------------------------------------- |
+| **Scan current file** | `Ctrl+Shift+S` or right-click → "SecureCode-FL: Scan Current File"        |
+| **Scan workspace**    | Command Palette (`Ctrl+Shift+P`) → "SecureCode-FL: Scan Entire Workspace" |
+| **Toggle real-time**  | Command Palette → "SecureCode-FL: Toggle Real-Time Scanning"              |
+| **View dashboard**    | Command Palette → "SecureCode-FL: Show Vulnerability Dashboard"           |
 
 ### 4. Using the Feedback System
 
-| Action | How To |
-|--------|--------|
-| **Mark as False Positive** | Select code → right-click → "Mark Selection as False Positive" |
-| **Mark as Vulnerable** | Select code → right-click → "Mark Selection as Vulnerable" |
-| **Quick Fix** | Click the 💡 lightbulb on a detected vulnerability |
-| **Confirm Vulnerability** | Command Palette → "SecureCode-FL: Confirm Vulnerability at Cursor" |
-| **View Stats** | Command Palette → "SecureCode-FL: Show Feedback Statistics" |
+| Action                     | How To                                                             |
+| -------------------------- | ------------------------------------------------------------------ |
+| **Mark as False Positive** | Select code → right-click → "Mark Selection as False Positive"     |
+| **Mark as Vulnerable**     | Select code → right-click → "Mark Selection as Vulnerable"         |
+| **Quick Fix**              | Click the 💡 lightbulb on a detected vulnerability                 |
+| **Confirm Vulnerability**  | Command Palette → "SecureCode-FL: Confirm Vulnerability at Cursor" |
+| **View Stats**             | Command Palette → "SecureCode-FL: Show Feedback Statistics"        |
 
 ### 5. Train Model on Feedback
 
@@ -237,6 +246,7 @@ SecureCode-FL/
 ## 🔧 API Reference
 
 ### Scan Endpoint
+
 ```http
 POST /scan
 Content-Type: application/json
@@ -249,6 +259,7 @@ Content-Type: application/json
 ```
 
 ### Feedback Endpoint
+
 ```http
 POST /feedback
 Content-Type: application/json
@@ -264,6 +275,7 @@ Content-Type: application/json
 ```
 
 ### Feedback Stats
+
 ```http
 GET /feedback/stats
 
@@ -284,16 +296,19 @@ Response:
 ## 🧪 Testing
 
 ### Run API Tests
+
 ```bash
 .\venv\Scripts\python.exe test_feedback_api.py
 ```
 
 ### Run FL Simulation
+
 ```bash
 .\venv\Scripts\python.exe federated\fl_simulation.py
 ```
 
 ### Run Distributed FL Test
+
 ```bash
 .\venv\Scripts\python.exe federated\test_distributed.py
 ```
@@ -302,19 +317,20 @@ Response:
 
 ## 📊 Model Performance
 
-| Metric | Value |
-|--------|-------|
-| Accuracy | 94.7% |
-| FL Rounds | 20 |
-| Clients | 3 |
-| Model Parameters | 555,265 |
-| Aggregation Strategy | FedAvg |
+| Metric               | Value   |
+| -------------------- | ------- |
+| Accuracy             | 94.7%   |
+| FL Rounds            | 20      |
+| Clients              | 3       |
+| Model Parameters     | 555,265 |
+| Aggregation Strategy | FedAvg  |
 
 ---
 
 ## 🛡️ Detected Vulnerabilities
 
 ### High Severity
+
 - Hardcoded passwords, API keys, secrets
 - SQL injection (string concatenation)
 - Code injection (eval, exec)
@@ -323,6 +339,7 @@ Response:
 - SSL verification disabled
 
 ### Medium Severity
+
 - Debug mode enabled
 - Weak cryptography (MD5, SHA1)
 - XSS vulnerabilities (innerHTML)
@@ -331,6 +348,7 @@ Response:
 - SSRF risks
 
 ### Low Severity
+
 - Insecure HTTP protocol
 - Infinite loops
 - Fixed sleep durations
@@ -356,6 +374,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👤 Author
 
 **Sharique Baig**
+
 - GitHub: [@ShariqueBaig](https://github.com/ShariqueBaig)
 
 ---

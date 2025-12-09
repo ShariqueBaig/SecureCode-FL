@@ -5,6 +5,7 @@ This guide covers all features and commands for using SecureCode-FL, from starti
 ---
 
 ## Table of Contents
+
 1. [Starting the Server](#1-starting-the-server)
 2. [Running the VS Code Extension](#2-running-the-vs-code-extension)
 3. [Scanning for Vulnerabilities](#3-scanning-for-vulnerabilities)
@@ -23,18 +24,21 @@ This guide covers all features and commands for using SecureCode-FL, from starti
 The inference server must be running for vulnerability detection to work.
 
 ### Windows (PowerShell)
+
 ```powershell
 cd "C:\path\to\SecureCode-FL"
 .\venv\Scripts\python.exe inference_server\server.py
 ```
 
 ### Windows (Command Prompt)
+
 ```cmd
 cd C:\path\to\SecureCode-FL
 venv\Scripts\python.exe inference_server\server.py
 ```
 
 ### Linux/Mac
+
 ```bash
 cd /path/to/SecureCode-FL
 source venv/bin/activate
@@ -42,11 +46,13 @@ python inference_server/server.py
 ```
 
 ### With Custom Port
+
 ```bash
 python inference_server/server.py --port 5001
 ```
 
 ### Expected Output
+
 ```
 ============================================================
   SecureCode-FL Inference Server
@@ -65,6 +71,7 @@ python inference_server/server.py --port 5001
 ## 2. Running the VS Code Extension
 
 ### Option A: Development Mode (F5)
+
 1. Open VS Code in the extension folder:
    ```bash
    code vscode-extension
@@ -73,6 +80,7 @@ python inference_server/server.py --port 5001
 3. A new VS Code window opens with the extension active
 
 ### Option B: Install from VSIX
+
 ```bash
 cd vscode-extension
 npm run package
@@ -84,25 +92,29 @@ npm run package
 ## 3. Scanning for Vulnerabilities
 
 ### Scan Current File
-| Method | Action |
-|--------|--------|
-| Keyboard | `Ctrl+Shift+S` (Windows/Linux) or `Cmd+Shift+S` (Mac) |
-| Context Menu | Right-click → "SecureCode-FL: Scan Current File" |
-| Command Palette | `Ctrl+Shift+P` → "SecureCode-FL: Scan Current File" |
+
+| Method          | Action                                                |
+| --------------- | ----------------------------------------------------- |
+| Keyboard        | `Ctrl+Shift+S` (Windows/Linux) or `Cmd+Shift+S` (Mac) |
+| Context Menu    | Right-click → "SecureCode-FL: Scan Current File"      |
+| Command Palette | `Ctrl+Shift+P` → "SecureCode-FL: Scan Current File"   |
 
 ### Scan Entire Workspace
-| Method | Action |
-|--------|--------|
+
+| Method          | Action                                                  |
+| --------------- | ------------------------------------------------------- |
 | Command Palette | `Ctrl+Shift+P` → "SecureCode-FL: Scan Entire Workspace" |
 
 ### Toggle Real-Time Scanning
-| Method | Action |
-|--------|--------|
+
+| Method          | Action                                                      |
+| --------------- | ----------------------------------------------------------- |
 | Command Palette | `Ctrl+Shift+P` → "SecureCode-FL: Toggle Real-Time Scanning" |
 
 ### View Dashboard
-| Method | Action |
-|--------|--------|
+
+| Method          | Action                                                         |
+| --------------- | -------------------------------------------------------------- |
 | Command Palette | `Ctrl+Shift+P` → "SecureCode-FL: Show Vulnerability Dashboard" |
 
 ---
@@ -112,6 +124,7 @@ npm run package
 Feedback helps improve the model. Your code stays private - only model weights are shared.
 
 ### Mark Code as Vulnerable (Missed Detection)
+
 1. **Select** the vulnerable code in the editor
 2. **Right-click** → "SecureCode-FL: Mark Selection as Vulnerable"
 3. **Choose** vulnerability type:
@@ -124,23 +137,27 @@ Feedback helps improve the model. Your code stays private - only model weights a
 5. **Describe** the vulnerability (optional)
 
 ### Mark as False Positive (Wrong Detection)
+
 1. **Select** the flagged code
 2. **Right-click** → "SecureCode-FL: Mark Selection as False Positive"
 3. **Explain** why it's not vulnerable (optional)
 
 ### Confirm a Detection
+
 1. **Place cursor** on a detected vulnerability
 2. **Command Palette** → "SecureCode-FL: Confirm Vulnerability at Cursor"
 
 ### Quick Fix (Lightbulb Menu)
+
 1. **Click** the 💡 lightbulb on a detected vulnerability
 2. Choose:
    - "✗ Mark as False Positive"
    - "✓ Confirm Vulnerability"
 
 ### View Feedback Statistics
-| Method | Action |
-|--------|--------|
+
+| Method          | Action                                                     |
+| --------------- | ---------------------------------------------------------- |
 | Command Palette | `Ctrl+Shift+P` → "SecureCode-FL: Show Feedback Statistics" |
 
 ---
@@ -148,6 +165,7 @@ Feedback helps improve the model. Your code stays private - only model weights a
 ## 5. Viewing the Feedback Database
 
 ### Using Python Script
+
 ```bash
 cd SecureCode-FL
 .\venv\Scripts\python.exe -c "
@@ -164,9 +182,11 @@ for r in rows:
 ```
 
 ### Using SQLite CLI
+
 ```bash
 sqlite3 data/user_feedback.db
 ```
+
 ```sql
 -- View all feedback
 SELECT * FROM feedback;
@@ -182,11 +202,13 @@ SELECT feedback_type, COUNT(*) FROM feedback GROUP BY feedback_type;
 ```
 
 ### Using VS Code SQLite Extension
+
 1. Install "SQLite Viewer" extension
 2. Open `data/user_feedback.db`
 3. Click on `feedback` table
 
 ### Using API Endpoint
+
 ```bash
 # Get statistics
 curl http://localhost:5000/feedback/stats
@@ -205,6 +227,7 @@ curl http://localhost:5000/feedback/untrained
 After collecting feedback, retrain the model to learn from your corrections.
 
 ### Local Training (Single User)
+
 ```bash
 cd SecureCode-FL
 
@@ -216,6 +239,7 @@ python federated/fl_feedback_client.py --mode local
 ```
 
 ### Expected Output
+
 ```
 ============================================================
   SecureCode-FL: Training on User Feedback
@@ -243,6 +267,7 @@ Epoch 2/5 - loss: 0.3210 - accuracy: 0.8500
 ```
 
 ### Reload Model in Server (Without Restart)
+
 ```bash
 curl -X POST http://localhost:5000/model/reload
 ```
@@ -254,6 +279,7 @@ curl -X POST http://localhost:5000/model/reload
 For distributed training across multiple users/machines.
 
 ### Start FL Server
+
 ```bash
 cd SecureCode-FL
 
@@ -265,6 +291,7 @@ python federated/fl_server.py
 ```
 
 ### Connect as FL Client
+
 ```bash
 # Windows
 .\venv\Scripts\python.exe federated\fl_feedback_client.py --mode fl --server localhost:8080
@@ -274,6 +301,7 @@ python federated/fl_feedback_client.py --mode fl --server localhost:8080
 ```
 
 ### Run FL Simulation (Local Testing)
+
 ```bash
 # Windows
 .\venv\Scripts\python.exe federated\fl_simulation.py
@@ -283,6 +311,7 @@ python federated/fl_simulation.py
 ```
 
 ### Run Distributed FL Test
+
 ```bash
 # Windows
 .\venv\Scripts\python.exe federated\test_distributed.py
@@ -295,21 +324,22 @@ python federated/test_distributed.py
 
 ## 8. API Endpoints Reference
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/scan` | POST | Scan code for vulnerabilities |
-| `/model/info` | GET | Get model information |
-| `/model/reload` | POST | Reload model from disk |
-| `/vulnerability-types` | GET | List vulnerability types |
-| `/feedback` | POST | Submit user feedback |
-| `/feedback/stats` | GET | Get feedback statistics |
-| `/feedback/list` | GET | List all feedback |
-| `/feedback/untrained` | GET | Get untrained feedback |
-| `/feedback/mark-trained` | POST | Mark feedback as trained |
-| `/feedback/<id>` | DELETE | Delete feedback entry |
+| Endpoint                 | Method | Description                   |
+| ------------------------ | ------ | ----------------------------- |
+| `/health`                | GET    | Health check                  |
+| `/scan`                  | POST   | Scan code for vulnerabilities |
+| `/model/info`            | GET    | Get model information         |
+| `/model/reload`          | POST   | Reload model from disk        |
+| `/vulnerability-types`   | GET    | List vulnerability types      |
+| `/feedback`              | POST   | Submit user feedback          |
+| `/feedback/stats`        | GET    | Get feedback statistics       |
+| `/feedback/list`         | GET    | List all feedback             |
+| `/feedback/untrained`    | GET    | Get untrained feedback        |
+| `/feedback/mark-trained` | POST   | Mark feedback as trained      |
+| `/feedback/<id>`         | DELETE | Delete feedback entry         |
 
 ### Example: Scan Code
+
 ```bash
 curl -X POST http://localhost:5000/scan \
   -H "Content-Type: application/json" \
@@ -317,6 +347,7 @@ curl -X POST http://localhost:5000/scan \
 ```
 
 ### Example: Submit Feedback
+
 ```bash
 curl -X POST http://localhost:5000/feedback \
   -H "Content-Type: application/json" \
@@ -334,36 +365,44 @@ curl -X POST http://localhost:5000/feedback \
 
 ## 9. Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Shift+S` | Scan current file |
-| `Ctrl+Shift+P` | Open Command Palette |
-| `Ctrl+.` | Open Quick Fix menu (on vulnerability) |
+| Shortcut       | Action                                 |
+| -------------- | -------------------------------------- |
+| `Ctrl+Shift+S` | Scan current file                      |
+| `Ctrl+Shift+P` | Open Command Palette                   |
+| `Ctrl+.`       | Open Quick Fix menu (on vulnerability) |
 
 ---
 
 ## 10. Troubleshooting
 
 ### Server Connection Errors
+
 ```
 Error: Cannot connect to SecureCode-FL server
 ```
+
 **Solution:** Make sure the server is running:
+
 ```bash
 .\venv\Scripts\python.exe inference_server\server.py
 ```
 
 ### Model Not Loading
+
 ```
 ⚠ No model found, using pattern-based detection only
 ```
+
 **Solution:** Check model path exists:
+
 ```bash
 ls models/federated/fl_global_model.keras
 ```
 
 ### Extension Not Working
+
 **Solution:** Rebuild and restart:
+
 ```bash
 cd vscode-extension
 npm run compile
@@ -371,16 +410,21 @@ npm run compile
 ```
 
 ### Feedback Not Saving
+
 **Solution:** Check database permissions:
+
 ```bash
 ls -la data/user_feedback.db
 ```
 
 ### Port Already in Use
+
 ```
 OSError: [Errno 98] Address already in use
 ```
+
 **Solution:** Use a different port:
+
 ```bash
 python inference_server/server.py --port 5001
 ```

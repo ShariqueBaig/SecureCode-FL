@@ -1,0 +1,77 @@
+## URGENT: Python Version Issue
+
+Your Python version (3.14.2) is TOO NEW for these packages.
+
+### The Problem
+- NumPy 2.3.5, TensorFlow 2.20, and related packages don't support Python 3.14 yet
+- You get DLL/module loading errors
+- This is a known compatibility issue
+
+### The Solution: Use Python 3.12 (5 minutes)
+
+**STEP 1: Download Python 3.12**
+- Go to: https://www.python.org/downloads/release/python-3127/
+- Download "Windows installer (64-bit)" 
+- This is Python 3.12.7 - LATEST STABLE VERSION
+
+**STEP 2: Install Python 3.12**
+- Run the installer
+- IMPORTANT: Check "Add Python to PATH" 
+- IMPORTANT: Check "Install pip"
+- Click "Install"
+
+**STEP 3: Uninstall Python 3.14 (Optional)**
+- Settings → Apps → Apps & features
+- Find "Python 3.14" and uninstall it
+- (Or you can keep both versions)
+
+**STEP 4: Verify Python 3.12 is Active**
+Open PowerShell and run:
+```powershell
+python --version
+```
+
+Should show: Python 3.12.7 (or similar 3.12.x)
+
+**STEP 5: Clean Up and Reinstall**
+```powershell
+cd "d:\Sharique\sem 5\CS\Research again\SecureCode-FL"
+
+# Remove old virtual environment
+Remove-Item venv -Recurse -Force -ErrorAction SilentlyContinue
+
+# Create fresh virtual environment
+python -m venv venv
+
+# Activate it
+.\venv\Scripts\Activate.ps1
+
+# Install everything
+pip install -r requirements.txt
+pip install -r inference_server/requirements.txt
+pip install flwr cryptography
+
+# Test
+python -c "import tensorflow; import numpy; print('SUCCESS!')"
+```
+
+**STEP 6: Start the Server**
+```powershell
+.\start_server.ps1
+```
+
+---
+
+### Why Python 3.12?
+- ✓ Full support for TensorFlow, NumPy, Pandas, etc.
+- ✓ Latest stable version (not bleeding edge like 3.14)
+- ✓ All your code will work
+- ✓ Better tested with ML libraries
+
+### If You Already Installed Python 3.12
+Just run this one command:
+```powershell
+cd "d:\Sharique\sem 5\CS\Research again\SecureCode-FL"
+.\setup_env.bat
+```
+
