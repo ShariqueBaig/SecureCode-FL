@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-12-10T20:44:31.863399",
+  "phase": "Phase 5 - Step 5.2",
+  "test": "Differential Privacy Mechanism",
+  "epsilon_tests": [
+    {
+      "epsilon": 0.5,
+      "noise_std": 9.689610525210778,
+      "noise_magnitude": 98.29925930428163,
+      "privacy_guarantee": "(10.7298, 1e-05)-DP",
+      "total_epsilon_multi_round": 10.729830131446736
+    },
+    {
+      "epsilon": 1.0,
+      "noise_std": 4.844805262605389,
+      "noise_magnitude": 40.6493048694028,
+      "privacy_guarantee": "(21.4597, 1e-05)-DP",
+      "total_epsilon_multi_round": 21.459660262893472
+    },
+    {
+      "epsilon": 2.0,
+      "noise_std": 2.4224026313026945,
+      "noise_magnitude": 17.449172274626164,
+      "privacy_guarantee": "(42.9193, 1e-05)-DP",
+      "total_epsilon_multi_round": 42.919320525786944
+    },
+    {
+      "epsilon": 5.0,
+      "noise_std": 0.9689610525210778,
+      "noise_magnitude": 8.338200489444743,
+      "privacy_guarantee": "(107.2983, 1e-05)-DP",
+      "total_epsilon_multi_round": 107.29830131446735
+    },
+    {
+      "epsilon": 10.0,
+      "noise_std": 0.4844805262605389,
+      "noise_magnitude": 4.479701404376951,
+      "privacy_guarantee": "(214.5966, 1e-05)-DP",
+      "total_epsilon_multi_round": 214.5966026289347
+    }
+  ],
+  "model_info": "Optimized model: 128-64-32-1 arch, 267k params, 86.3% FL baseline",
+  "convergence": "3 clients, 20 rounds, 69.5% R1 -> 86.3% R20",
+  "status": "PASSED"
+}
