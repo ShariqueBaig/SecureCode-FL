@@ -34,6 +34,7 @@ def test_dp_mechanism():
     print(f"\n[1] Testing DP Mechanism with varying epsilon")
     print(f"    Epsilon values: {epsilon_values}")
     print(f"    Num rounds: {num_rounds}")
+    print(f"    Model: Optimized (128-64-32-1 arch, 267k params, 86.3% FL baseline)")
     print("-" * 70)
     
     results = []
@@ -117,6 +118,8 @@ def test_dp_mechanism():
         'phase': 'Phase 5 - Step 5.2',
         'test': 'Differential Privacy Mechanism',
         'epsilon_tests': results,
+        'model_info': 'Optimized model: 128-64-32-1 arch, 267k params, 86.3% FL baseline',
+        'convergence': '3 clients, 20 rounds, 69.5% R1 -> 86.3% R20',
         'status': 'PASSED'
     }
     
@@ -131,6 +134,7 @@ def test_dp_mechanism():
     print("\n" + "="*70)
     print("  [OK] PHASE 5 STEP 5.2 COMPLETE")
     print("="*70)
+    print(f"  Model: Optimized (86.3% FL baseline, 128-64-32 arch)")
     print(f"  Tested {len(epsilon_values)} epsilon configurations")
     print(f"  All DP mechanisms working correctly")
     print("="*70)

@@ -63,32 +63,73 @@ class FederatedSimulator:
         }
         
     def prepare_data(self):
-        """Partition data across clients"""
+        """Partition data across clients - TRAIN/TEST SPLIT FIRST"""
         print(f"\n{'='*70}")
         print(" PREPARING FEDERATED DATA")
         print(f"{'='*70}")
         
-        # Partition data
-        partitioner = DataPartitioner(
-            num_clients=self.num_clients,
-            distribution=DATA_DISTRIBUTION
-        )
-        self.client_data, self.vectorizer = partitioner.partition()
-        
-        # Create global test set (20% of total data)
-        # Load original data to create test set
+        # CRITICAL: Split train/test FIRST (80/20) on RAW DATA
+        # This ensures test set is completely separate from training
+        print(f"\n[1] Loading all data...")
+        partitioner = DataPartitioner(num_clients=1)
         partitioner.load_data()
         X_all, y_all = partitioner.create_tfidf_features()
         
-        # Use vectorizer fitted on all data for consistency
-        _, self.X_test, _, self.y_test = train_test_split(
+        print(f"[2] Splitting into train (80%) and test (20%)...")
+        X_train_all, self.X_test, y_train_all, self.y_test = train_test_split(
             X_all, y_all,
             test_size=0.2,
             random_state=RANDOM_STATE,
             stratify=y_all
         )
         
-        print(f"\nGlobal test set: {len(self.y_test)} samples")
+        print(f"    Total samples: {len(y_all)}")
+        print(f"    Training samples: {len(y_train_all)} (80%)")
+        print(f"    Test samples: {len(self.y_test)} (20%)")
+        
+        # Now partition ONLY the training data to clients WITHOUT OVERLAP
+        print(f"\n[3] Partitioning TRAINING data to {self.num_clients} clients (NO OVERLAP)...")
+        
+        # Simple split: divide training indices into N equal parts
+        train_indices = np.arange(len(y_train_all))
+        np.random.shuffle(train_indices)
+        split_indices = np.array_split(train_indices, self.num_clients)
+        
+        self.client_data = []
+        print(f"\n{'-'*70}")
+        print(f" CLIENT DATA DISTRIBUTION (FROM TRAINING SET ONLY)")
+        print(f"{'-'*70}")
+        
+        for client_id, client_indices in enumerate(split_indices):
+            X_client = X_train_all[client_indices]
+            y_client = y_train_all[client_indices]
+            
+            self.client_data.append({
+                'client_id': client_id,
+                'X_train': X_client,
+                'y_train': y_client,
+                'num_samples': len(client_indices),
+                'class_distribution': {
+                    'vulnerable': int((y_client == 1).sum()),
+                    'secure': int((y_client == 0).sum())
+                }
+            })
+            
+            print(f"\nClient {client_id}:")
+            print(f"  Samples: {len(client_indices)}")
+            print(f"  Vulnerable (1): {int((y_client == 1).sum())}")
+            print(f"  Secure (0): {int((y_client == 0).sum())}")
+        
+        self.vectorizer = partitioner.vectorizer
+        
+        print(f"\n{'-'*70}")
+        print(f"Global test set: {len(self.y_test)} samples (SEPARATE FROM TRAINING)")
+        print(f"Data split verification:")
+        total_client_samples = sum(c['num_samples'] for c in self.client_data)
+        print(f"  - Client total: {total_client_samples}")
+        print(f"  - Test set: {len(self.y_test)}")
+        print(f"  - Dataset total: {len(y_all)}")
+        print(f"  - Match: {total_client_samples + len(self.y_test) == len(y_all)}")
         
     def initialize_global_model(self):
         """Initialize the global model"""

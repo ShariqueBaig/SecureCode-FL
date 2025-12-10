@@ -105,7 +105,7 @@ class FeedbackTrainer:
         
         Returns:
             Tuple of (code_snippets, labels)
-            Labels: 0 = vulnerable, 1 = secure
+            Labels: 1 = vulnerable, 0 = secure (CONSISTENT with data_partitioner)
         """
         # Import here to avoid circular dependency
         sys.path.append(os.path.join(self.base_path, "inference_server"))
@@ -123,12 +123,12 @@ class FeedbackTrainer:
         
         for fb in untrained:
             code_snippets.append(fb.code_snippet)
-            # 1 = vulnerable (Error), 0 = secure (Good) - matching original training format
+            # Fixed: 1 = vulnerable, 0 = secure (consistent with data_partitioner.py)
             labels.append(1 if fb.user_label == "vulnerable" else 0)
         
         print(f"✓ Loaded {len(untrained)} feedback entries")
-        print(f"  - Vulnerable: {labels.count(0)}")
-        print(f"  - Secure: {labels.count(1)}")
+        print(f"  - Vulnerable (1): {labels.count(1)}")  # Fixed
+        print(f"  - Secure (0): {labels.count(0)}")      # Fixed
         
         return code_snippets, labels
     

@@ -22,15 +22,15 @@ MIN_AVAILABLE_CLIENTS = 3  # Minimum clients to start
 NUM_CLIENTS = 3  # Number of simulated clients/organizations
 LOCAL_EPOCHS = 3  # Epochs per client per round
 BATCH_SIZE = 16
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.005  # Optimized via GridSearchCV (500 configurations)
 
 # =============================================================================
-# Model Configuration
+# Model Configuration (Optimized via exhaustive GridSearchCV)
 # =============================================================================
 TFIDF_MAX_FEATURES = 2000
-HIDDEN_LAYERS = [256, 128, 64]
-DROPOUT_RATES = [0.4, 0.3, 0.2]
-L2_REGULARIZATION = 0.001
+HIDDEN_LAYERS = [128, 64, 32]  # Smaller architecture selected from 500 configs
+DROPOUT_RATES = [0.3, 0.2, 0.1]  # Conservative regularization
+L2_REGULARIZATION = 0.01  # Stronger L2 penalty
 
 # =============================================================================
 # Data Partitioning

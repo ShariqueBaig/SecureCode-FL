@@ -37,7 +37,7 @@ class VulnerabilityDetectionClient(fl.client.NumPyClient):
         Args:
             client_id: Unique identifier for this client
             X_train: TF-IDF features of local code samples
-            y_train: Labels (0=vulnerable, 1=secure)
+            y_train: Labels (1=vulnerable/Error, 0=secure/Good)
         """
         self.client_id = client_id
         self.X_train = X_train
@@ -45,8 +45,8 @@ class VulnerabilityDetectionClient(fl.client.NumPyClient):
         self.model = create_model(input_dim=X_train.shape[1])
         
         print(f"[Client {client_id}] Initialized with {len(y_train)} samples")
-        print(f"  - Vulnerable: {(y_train == 0).sum()}")
-        print(f"  - Secure: {(y_train == 1).sum()}")
+        print(f"  - Vulnerable (1): {(y_train == 1).sum()}")  # Fixed: 1 = vulnerable
+        print(f"  - Secure (0): {(y_train == 0).sum()}")      # Fixed: 0 = secure
     
     def get_parameters(self, config: Dict) -> List[np.ndarray]:
         """Return current model weights."""
