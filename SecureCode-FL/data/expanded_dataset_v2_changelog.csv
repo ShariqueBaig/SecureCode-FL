@@ -1,0 +1,13 @@
+row,vulnerability_type,original_length,cleaned_length,bytes_removed
+7,Broken Function Level Authorization,1151,1082,69
+48,Unsafe Consumption of APIs,1690,1686,4
+116,Improper Inventory Management,829,779,50
+134,Broken Authentication,832,793,39
+174,Broken Function Level Authorization,1227,1180,47
+176,Unsafe Consumption of APIs,982,970,12
+288,Broken Function Level Authorization,1095,1041,54
+347,Unsafe Consumption of APIs,369,357,12
+430,Improper Inventory Management,754,716,38
+441,Unsafe Consumption of APIs,449,357,92
+444,Unsafe Consumption of APIs,587,583,4
+460,Unsafe Consumption of APIs,432,354,78

@@ -128,7 +128,6 @@ def login():
         return jsonify({'message': 'Logged in successfully!'})
     return jsonify({'message': 'Invalid credentials!'}), 401
 
-# Secure endpoint restricted to administrators based on session role
 @app.route('/admin/get_all_users', methods=['GET'])
 def get_all_users():
     # Check if the user is logged in and has the 'admin' role
@@ -788,8 +787,8 @@ def sanitize_input(user_input):
     sanitized_input = re.sub(r'[^\w\s]', '', user_input)  # Remove non-alphanumeric characters
     return sanitized_input
 
-@app.route('/secure_api', methods=['POST'])
-def secure_api():
+@app.route('/impl_api', methods=['POST'])
+def impl_api():
     api_key = request.headers.get('X-API-Key')
     if not api_key or not validate_api_key(api_key):
         return jsonify({'error': 'Unauthorized access'}), 401
@@ -1999,7 +1998,7 @@ def add_item():
         quantity = data.get('quantity')
 
         if item_name and quantity:
-            inventory[item_name] = quantity  # Vulnerable code: No further authorization checks
+            inventory[item_name] = quantity  
             return jsonify({'message': 'Item added to inventory'}), 200
         else:
             return jsonify({'error': 'Invalid input data'}), 400
@@ -2303,7 +2302,7 @@ def read_file():
 135,Broken Authentication,Insecure Session Management,Good,"from flask import Flask, request, jsonify, session
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Ensure this is kept secret and secure
+app.secret_key = 'supersecretkey'  
 
 # User data for demonstration purposes
 users = {
@@ -2918,7 +2917,6 @@ def login():
         return jsonify({'message': 'Logged in successfully!'})
     return jsonify({'message': 'Invalid credentials!'}), 401
 
-# Vulnerable admin function without role check
 @app.route('/admin/delete_user', methods=['POST'])
 def delete_user():
     if 'username' not in session:
@@ -2950,8 +2948,8 @@ import re
 
 app = Flask(__name__)
 
-@app.route('/vulnerable_api', methods=['POST'])
-def vulnerable_api():
+@app.route('/impl_api', methods=['POST'])
+def impl_api():
     user_input = request.json.get('user_input')
 
     # Validate input
@@ -4874,7 +4872,6 @@ def login():
         return jsonify({'message': 'Logged in successfully!'})
     return jsonify({'message': 'Invalid credentials!'}), 401
 
-# Vulnerable endpoint accessible by role manipulation
 @app.route('/admin/get_all_users', methods=['GET'])
 def get_all_users():
     role = request.args.get('role')
@@ -5847,8 +5844,8 @@ import requests
 
 app = Flask(__name__)
 
-@app.route('/vulnerable_api', methods=['POST'])
-def vulnerable_api():
+@app.route('/impl_api', methods=['POST'])
+def impl_api():
     user_input = request.json.get('user_input')
 
     # Assume this endpoint consumes an external API
@@ -7133,7 +7130,7 @@ def update_inventory():
 
     if item_name and quantity:
         if item_name in inventory:
-            inventory[item_name] += quantity  # Vulnerable code: No input validation
+            inventory[item_name] += quantity  
             return jsonify({'message': 'Inventory updated successfully'}), 200
         else:
             return jsonify({'error': 'Item not found in inventory'}), 404
@@ -7331,9 +7328,8 @@ app = Flask(__name__)
 def transmit_data():
     user_input = request.json.get('user_input')
 
-    # Updated endpoint to use HTTPS for secure communication
     response = requests.post(
-        'https://secure.api.com/transmit',  # Use HTTPS for secure connection
+        'https://endpoint.api.com/transmit',  
         json={'data': user_input}
     )
 
@@ -7364,8 +7360,8 @@ import requests
 
 app = Flask(__name__)
 
-@app.route('/secure_api', methods=['POST'])
-def secure_api():
+@app.route('/impl_api', methods=['POST'])
+def impl_api():
     api_key = request.headers.get('X-API-Key')
     if not api_key:
         return jsonify({'error': 'Unauthorized access'}), 401
@@ -7627,7 +7623,6 @@ app = Flask(__name__)
 def transmit_data():
     user_input = request.json.get('user_input')
 
-    # Assume this endpoint transmits user input to an external API insecurely
     response = requests.post(
         'http://insecure.api.com/transmit',
         json={'data': user_input}
