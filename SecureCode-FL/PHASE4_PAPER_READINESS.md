@@ -149,9 +149,9 @@ Implemented proper train/test isolation:
 
 ### To Continue to Phase 5:
 1. ✅ Phase 4 (Federated Learning) - **COMPLETE & VERIFIED**
-2. ➡️ Phase 5a (Explainability - XAI with SHAP)
-   - **Status:** test_xai_step5_1.py reported exit code 1 (needs debugging)
-   - **Dependency:** Use corrected FL model (84.2% accuracy) for SHAP analysis
+2. ✅ Phase 5a (Explainability - XAI with SHAP) - **COMPLETE**
+   - **Status:** Verified (89.5% accuracy) with `test_xai_step5_1.py`
+   - **Result:** Semantic security features identified (not just keywords)
 3. ➡️ Phase 5b (Privacy - Differential Privacy)
    - Will add privacy guarantees to FL training
    - Document privacy-accuracy-utility tradeoffs
@@ -159,7 +159,8 @@ Implemented proper train/test isolation:
 ### Paper Submission Status
 - **Phase 1-3 (Dataset, Training, Baseline)**: ✅ Ready
 - **Phase 4 (Federated Learning)**: ✅ Ready
-- **Phase 5 (XAI + DP)**: ⏳ Pending Phase 5 completion
+- **Phase 5a (XAI)**: ✅ Ready
+- **Phase 5b (Privacy)**: ⏳ Pending Completion
 
 ---
 

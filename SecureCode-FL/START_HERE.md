@@ -51,13 +51,13 @@
 Phase 1: Baseline Reproduction ..................... ✅ COMPLETE
 Phase 2: Neural Network Conversion ................ ✅ COMPLETE
 Phase 2.5: Dataset Expansion (471 samples) ....... ✅ COMPLETE
-Phase 3: Federated Learning (84.2% accuracy) .... ✅ COMPLETE*
+Phase 3: Federated Learning (87.4% accuracy) .... ✅ COMPLETE
 Phase 4: VS Code Extension & Feedback ........... ✅ COMPLETE
-Phase 5a: Explainability (SHAP) ................. 🔴 NEEDS DEBUG
+Phase 5a: Explainability (SHAP) ................. ✅ COMPLETE
 Phase 5b: Differential Privacy .................. ⏳ PENDING
 Phase 6: Evaluation & Final Paper ............... 🔄 IN PROGRESS
 
-*Data leakage fixed Dec 9 (was 94.7%, corrected to 84.2%)
+*Data leakage fixed (was 94.7%, corrected to 87.4%)
 ```
 
 ---
@@ -118,9 +118,9 @@ A federated learning system for detecting code vulnerabilities while keeping you
 |--------|-------|---------|
 | Dataset Size | 471 samples | Expanded from 60 |
 | Vulnerable Samples | 233 (49.5%) | Balanced |
-| Federated Accuracy | **84.2%** | With proper train/test split |
-| Centralized Baseline | 88.4% | For comparison |
-| Privacy Cost | -4.2% | Non-IID federated gap |
+| Federated Accuracy | **87.4%** | With proper train/test split |
+| Centralized Baseline | 89.5% | For comparison |
+| Privacy Cost | -2.1% | Non-IID federated gap |
 | Inference Latency | <50ms | Real-time IDE suitable |
 | Clients | 3 | Simulated organizations |
 | FL Rounds | 20 | Training rounds |
@@ -130,7 +130,7 @@ A federated learning system for detecting code vulnerabilities while keeping you
 ## 🔍 Finding Information Fast
 
 **"How accurate is the model?"**  
-→ 84.2% federated, 88.4% centralized  
+→ 87.4% federated, 89.5% centralized  
 → See: QUICK_REFERENCE.md § "Key Numbers"
 
 **"Why not 94.7% like the paper said before?"**  

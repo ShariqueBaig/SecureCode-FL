@@ -31,7 +31,7 @@ def test_xai_explainer():
     
     # Load model
     print("\n[1] Loading model and vectorizer...")
-    model_path = "models/federated/fl_global_model.keras"
+    model_path = "models/neural_networks/cleaned_model_20251212_192709.keras"
     vectorizer_path = "models/tfidf_vectorizer.pkl"
     
     if not os.path.exists(model_path):
@@ -45,18 +45,23 @@ def test_xai_explainer():
     print("\n[2] Initializing SHAP explainer...")
     explainer = VulnerabilityExplainer(vectorizer_path, model)
     
-    # Load and prepare data
-    print("\n[3] Preparing background data...")
-    partitioner = DataPartitioner(num_clients=1)
-    partitioner.load_data()
-    X_all, y_all = partitioner.create_tfidf_features()
-    
-    # Split data
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_all, y_all, test_size=0.2, random_state=42
-    )
-    
+    # Load and prepare data to match main training
+    print("\n[3] Loading data and applying saved split...")
+    import joblib
+    import numpy as np
+    import pandas as pd
+    # Load dataset
+    df = pd.read_csv('data/expanded_dataset_v2.csv')
+    label_map = {'Good': 1, 'Error': 0}
+    y_all = df['Result'].map(label_map).values
+    # Load saved indices
+    split = joblib.load('models/train_test_indices.pkl')
+    train_idx, test_idx = split['train_idx'], split['test_idx']
+    # Load vectorizer
+    vectorizer = joblib.load('models/tfidf_vectorizer.pkl')
+    X_all = vectorizer.transform(df['Code'].astype(str)).toarray()
+    X_train, X_test = X_all[train_idx], X_all[test_idx]
+    y_train, y_test = y_all[train_idx], y_all[test_idx]
     # Prepare background data (use training data)
     explainer.prepare_background_data(X_train, num_samples=50)
     

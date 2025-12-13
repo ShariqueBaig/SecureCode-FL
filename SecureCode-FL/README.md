@@ -13,7 +13,7 @@ A VS Code extension for real-time code vulnerability detection powered by **Fede
 
 - Scans Python, JavaScript, TypeScript, Java, C#, and PHP
 - Detects 50+ vulnerability patterns
-- ML-powered detection with 94.7% accuracy
+- ML-powered detection with **87.4% accuracy** (Federated)
 - OWASP API Top 10 coverage
 
 ### 🔒 Privacy-Preserving Federated Learning

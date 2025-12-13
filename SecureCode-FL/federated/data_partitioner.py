@@ -38,8 +38,8 @@ class DataPartitioner:
         csv_path = os.path.join(DATA_DIR, "expanded_dataset_v2.csv")
         self.df = pd.read_csv(csv_path)
         
-        # Convert labels (CONSISTENT: Error = 1 (vulnerable), Good = 0 (secure))
-        self.df['label'] = self.df['Result'].map({'Error': 1, 'Good': 0})
+        # Convert labels to match main training: Good = 1 (secure), Error = 0 (vulnerable)
+        self.df['label'] = self.df['Result'].map({'Good': 1, 'Error': 0})
         
         print(f"Loaded dataset: {len(self.df)} samples")
         print(f"Vulnerability types: {self.df['Primary Vulnerability'].nunique()}")

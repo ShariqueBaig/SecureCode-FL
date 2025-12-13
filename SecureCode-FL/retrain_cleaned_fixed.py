@@ -73,6 +73,12 @@ X_train, X_test, y_train, y_test = train_test_split(
     X_dense, y, test_size=0.2, random_state=42, stratify=y
 )
 
+# Save train/test indices for reproducibility
+import joblib
+indices = np.arange(len(X_dense))
+train_idx, test_idx = train_test_split(indices, test_size=0.2, random_state=42, stratify=y)
+joblib.dump({'train_idx': train_idx, 'test_idx': test_idx}, 'models/train_test_indices.pkl')
+
 print(f"\nTraining set: {len(X_train)} samples")
 print(f"  Vulnerable: {np.sum(y_train == 0)} ({np.sum(y_train == 0)/len(y_train)*100:.1f}%)")
 print(f"  Secure: {np.sum(y_train == 1)} ({np.sum(y_train == 1)/len(y_train)*100:.1f}%)")
