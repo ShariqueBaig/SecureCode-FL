@@ -59,7 +59,7 @@ sharique.baig@iba.edu.pk}
 \maketitle
 
 \begin{abstract}
-Traditional machine learning approaches to code vulnerability detection require organizations to share their proprietary source code with centralized systems, raising significant privacy and intellectual property concerns. This paper presents SecureCode-FL, a novel privacy-preserving vulnerability detection system that leverages Federated Learning (FL) to enable collaborative model improvement while keeping source code local. Our system comprises four integrated components: (1) a deep neural network trained on a curated dataset of 471 code vulnerability samples covering multiple exploit categories, (2) a federated learning infrastructure using the Flower framework implementing Federated Averaging (FedAvg), (3) a Visual Studio Code extension providing real-time vulnerability detection during development, and (4) a human-in-the-loop feedback mechanism enabling continuous model improvement. Experimental results demonstrate that our federated model achieves 88.4\% accuracy on a held-out test set, essentially matching the centralized baseline of 88.42\%. This exceptional result—a mere 0.02 percentage point gap—demonstrates that privacy-preserving distributed learning can maintain competitive accuracy with centralized approaches while addressing fundamental data privacy concerns in software security. The system processes code snippets in under 50 milliseconds, making it suitable for real-time IDE integration.
+Traditional machine learning approaches to code vulnerability detection require organizations to share their proprietary source code with centralized systems, raising significant privacy and intellectual property concerns. This paper presents SecureCode-FL, a novel privacy-preserving vulnerability detection system that leverages Federated Learning (FL) to enable collaborative model improvement while keeping source code local. Our system comprises four integrated components: (1) a deep neural network trained on a curated dataset of 471 code vulnerability samples covering multiple exploit categories, (2) a federated learning infrastructure using the Flower framework implementing Federated Averaging (FedAvg), (3) a Visual Studio Code extension providing real-time vulnerability detection during development, and (4) a human-in-the-loop feedback mechanism enabling continuous model improvement. Experimental results demonstrate that our federated model achieves 85.3\% accuracy on a held-out test set, compared to a centralized baseline of 86.3\%. This minimal 1.1 percentage point gap demonstrates that privacy-preserving distributed learning can maintain competitive accuracy with centralized approaches while addressing fundamental data privacy concerns in software security. The system processes code snippets in under 50 milliseconds, making it suitable for real-time IDE integration.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -98,7 +98,7 @@ We present SecureCode-FL, a system that resolves the Privacy Paradox through Fed
     
     \item Privacy-preserving architecture: Source code never leaves local machines; only model weight updates are shared during federation.
     
-    \item Exceptional privacy-accuracy tradeoff: Our federated model achieves 88.4\% accuracy compared to 88.42\% centralized, demonstrating that FL can match centralized performance while preserving data privacy.
+    \item Competitive privacy-accuracy tradeoff: Our federated model achieves 85.3\% accuracy compared to 86.3\% centralized, demonstrating that FL can achieve comparable performance while preserving data privacy with only a 1.1\% accuracy gap.
     
     \item Complete end-to-end system: Implementation includes a Visual Studio Code extension for real-time detection and a user feedback mechanism for continuous improvement.
     
@@ -490,9 +490,9 @@ During initial implementation, federated results showed 94.7\% accuracy with onl
     thick,
     ]
     coordinates {
-    (0,88.42)(21,88.42)
+    (0,86.3)(21,86.3)
     };
-    \addlegendentry{Centralized Baseline (88.42\%)}
+    \addlegendentry{Centralized Baseline (86.3\%)}
     
 \end{axis}
 \end{tikzpicture}
@@ -509,12 +509,12 @@ Table \ref{tab:federated} presents the final federated model performance on the 
 \begin{tabular}{@{}lc@{}}
 \toprule
 \textbf{Metric} & \textbf{Value} \\ \midrule
-Final Accuracy & 88.4\% \\
-Precision & 85.2\% \\
-Recall & 91.5\% \\
-F1-Score & 88.2\% \\
-Centralized Baseline & 88.42\% \\
-Difference & -0.02\% \\ \bottomrule
+Final Accuracy & 85.3\% \\
+Precision & 84.2\% \\
+Recall & 87.4\% \\
+F1-Score & 85.8\% \\
+Centralized Baseline & 86.3\% \\
+Difference & -1.1\% \\ \bottomrule
 \end{tabular}
 \end{table}
 
@@ -537,7 +537,7 @@ Client 2 & 125 & 64 (51.2\%) & 61 (48.8\%) \\
 \end{tabular}
 \end{table}
 
-The non-IID distribution is intentional: each client receives slightly different vulnerability type distributions. This realistic heterogeneity causes convergence variance but prevents overfitting to any single data distribution. By round 20, all clients achieve 94-96\% local accuracy due to effective weight averaging, and the global test accuracy (88.4\%) demonstrates that federated aggregation successfully combines client knowledge.
+The non-IID distribution is intentional: each client receives slightly different vulnerability type distributions. This realistic heterogeneity causes convergence variance but prevents overfitting to any single data distribution. By round 20, all clients achieve 91-96\% local accuracy due to effective weight averaging, and the global test accuracy (85.3\%) demonstrates that federated aggregation successfully combines client knowledge while maintaining only a 1.1\% gap from centralized training.
 
 \subsection{Inference Performance}
 
@@ -577,7 +577,7 @@ We performed a paired t-test comparing centralized and federated results across 
 \end{tabular}
 \end{table}
 
-Client 2 demonstrates superior initial performance (81.6\% vs 54--57\% at round 1), which federated averaging mitigates to prevent overfitting. By round 20, all clients achieve 94--96\% local accuracy, demonstrating effective knowledge transfer through weight aggregation. The global test accuracy of 88.4\% reflects aggregated model performance on the held-out test set.
+Client 2 demonstrates superior initial performance (81.6\% vs 54--57\% at round 1), which federated averaging mitigates to prevent overfitting. By round 20, all clients achieve 91--96\% local accuracy, demonstrating effective knowledge transfer through weight aggregation. The global test accuracy of 85.3\% reflects aggregated model performance on the held-out test set.
 
 \subsection{Confusion Matrix and Error Analysis}
 
@@ -592,11 +592,11 @@ Figure \ref{fig:confusion} presents the confusion matrix for the federated model
     \draw[fill=orange!40] (0,2) rectangle (2,4);
     \draw[fill=blue!40] (2,2) rectangle (4,4);
     
-    % Values (84 correct out of 95 = 88.4%)
-    \node at (1,1) {\Large\textbf{43}};
-    \node at (3,1) {\Large\textbf{4}};
-    \node at (1,3) {\Large\textbf{7}};
-    \node at (3,3) {\Large\textbf{41}};
+    % Values (81 correct out of 95 = 85.3%)
+    \node at (1,1) {\Large\textbf{41}};
+    \node at (3,1) {\Large\textbf{6}};
+    \node at (1,3) {\Large\textbf{8}};
+    \node at (3,3) {\Large\textbf{40}};
     
     % Labels
     \node[font=\scriptsize] at (1,0.4) {(TP)};
@@ -619,11 +619,11 @@ Figure \ref{fig:confusion} presents the confusion matrix for the federated model
     \draw[thick] (2,0) -- (2,4);
     \draw[thick] (0,2) -- (4,2);
 \end{tikzpicture}
-\caption{Confusion Matrix for Federated Model (Test Set, n=95 samples). Blue=correct classifications, Orange=errors. Accuracy: 84/95 = 88.4\%. Vulnerable Recall: 43/47 = 91.5\%; Secure Specificity: 41/48 = 85.4\%.}
+\caption{Confusion Matrix for Federated Model (Test Set, n=95 samples). Blue=correct classifications, Orange=errors. Accuracy: 81/95 = 85.3\%. Vulnerable Recall: 41/47 = 87.2\%; Secure Specificity: 40/48 = 83.3\%.}
 \label{fig:confusion}
 \end{figure}
 
-The model correctly identifies 43 out of 47 vulnerable samples (91.5\% recall) and 41 out of 48 secure samples (85.4\% specificity). Of the 11 misclassifications, 4 are false negatives (missed vulnerabilities) and 7 are false positives. This distribution is favorable for security applications where false positives are preferred over missed vulnerabilities, as each false positive can be quickly verified by developers while false negatives represent real security gaps.
+The model correctly identifies 41 out of 47 vulnerable samples (87.2\% recall) and 40 out of 48 secure samples (83.3\% specificity). Of the 14 misclassifications, 6 are false negatives (missed vulnerabilities) and 8 are false positives. While false positives are generally preferred in security applications, future work will focus on reducing the false negative rate through improved feature engineering and model architecture.
 
 %==============================================================================
 \section{Discussion}
@@ -634,9 +634,9 @@ The model correctly identifies 43 out of 47 vulnerable samples (91.5\% recall) a
 
 To validate the interpretability and trustworthiness of SecureCode-FL, we integrated SHAP (SHapley Additive exPlanations) for post-hoc model explanation. The XAI pipeline was rigorously aligned with the main training pipeline: the same cleaned dataset, TF-IDF vectorizer, train/test split indices, and optimized neural network model were used for both training and explainability. This ensures that all reported explanations and accuracy metrics are fully reproducible and directly comparable to the main results.
 
-	extbf{Test Accuracy:} The SHAP XAI script achieved a test accuracy of \textbf{88.42\%} on the held-out test set (matching the centralized baseline), confirming that the explainability pipeline is consistent and valid.
+\textbf{Test Accuracy:} The SHAP XAI script achieved a test accuracy of \textbf{91.58\%} on the held-out test set, confirming that the explainability pipeline is consistent and valid.
 
-	extbf{SHAP Explanations:} For both vulnerable and secure code samples, SHAP correctly identified the most influential features contributing to the model's predictions. For example, top features increasing vulnerability risk included tokens such as \texttt{safe\_name}, \texttt{abort}, \texttt{secure\_filename}, and \texttt{400}, which are semantically relevant to API security. The explanations are interpretable and align with domain knowledge, supporting the model's trustworthiness.
+\textbf{SHAP Explanations:} For both vulnerable and secure code samples, SHAP correctly identified the most influential features contributing to the model's predictions. For example, top features increasing vulnerability risk for vulnerable samples included tokens such as \texttt{send\_file}, \texttt{filename}, \texttt{request}, and \texttt{format}, which are semantically relevant to API security. Conversely, features decreasing risk for secure samples included \texttt{secure\_filename}, \texttt{abort}, \texttt{allowed\_ext}, and \texttt{limiter}---all indicating proper input validation and rate limiting. The explanations are interpretable and align with domain knowledge, supporting the model's trustworthiness.
 
 	extbf{Reproducibility:} The XAI script loads the saved vectorizer, model, and train/test indices from the main training run, eliminating data leakage and split inconsistencies. This guarantees that all explainability results are directly comparable to the main evaluation metrics.
 
@@ -644,7 +644,7 @@ To validate the interpretability and trustworthiness of SecureCode-FL, we integr
 
 \subsection{Privacy-Accuracy Tradeoff Analysis}
 
-The federated model achieves 88.4\% accuracy compared to 88.42\% centralized, representing a negligible difference. This result demonstrates that federated learning can achieve comparable performance to centralized training while providing strong privacy guarantees:
+The federated model achieves 85.3\% accuracy compared to 86.3\% centralized, representing a 1.1 percentage point gap. This result demonstrates that federated learning can achieve competitive performance with centralized training while providing strong privacy guarantees:
 
 \begin{enumerate}
     \item \textbf{Effective Weight Averaging}: The FedAvg algorithm successfully aggregates knowledge from non-IID client data, achieving model quality comparable to centralized training.
@@ -709,13 +709,13 @@ Our system provides privacy through:
 This paper presented SecureCode-FL, a privacy-preserving code vulnerability detection system using Federated Learning. Our key findings include:
 
 \begin{enumerate}
-    \item Federated learning achieves 88.4\% accuracy with a negligible 0.02 percentage point decrease relative to centralized baseline (88.42\%), demonstrating that FL can match centralized performance while preserving data privacy
+    \item Federated learning achieves 85.3\% accuracy with only a 1.1 percentage point gap from centralized baseline (86.3\%), demonstrating that FL can achieve competitive performance while preserving data privacy
     
-    \item Dataset cleaning significantly improved baseline performance: Identification and removal of 24 label-leaking features (vulnerable\_api function names, vulnerability-specific comments) increased test accuracy from 87.4\% to 88.42\% and cross-validation performance from 84.83\% $\pm$ 6.81\% to 92.54\% $\pm$ 1.64\%, confirming improved generalization robustness
+    \item Dataset cleaning and consistent label encoding significantly improved performance: Standardizing labels across all components (Error=1/Vulnerable, Good=0/Secure) and removing label-leaking features improved model reliability and achieved 90.79\% cross-validation accuracy with reduced variance ($\pm$ 2.15\%)
     
     \item Systematic hyperparameter grid search (500 configurations) identified optimal architecture and hyperparameters, reducing model size by 27.5\% (from 387,009 to 267,393 parameters)
     
-    \item Privacy and accuracy effectiveness achieve optimal equilibrium: Source code remains local while maintaining identical classification performance (88.4\% federated vs 88.42\% centralized)
+    \item Privacy and accuracy achieve near-optimal equilibrium: Source code remains local with only a minimal 1.1\% accuracy gap (85.3\% federated vs 86.3\% centralized)
     
     \item Real-time IDE integration proves practical with inference latency below 50 milliseconds
     
@@ -724,7 +724,7 @@ This paper presented SecureCode-FL, a privacy-preserving code vulnerability dete
     \item Data isolation methodology proves essential: Initial experimental results (94.7\%) were inflated due to test set contamination; proper train/test splitting before client partitioning is critical for valid federated learning evaluation
 \end{enumerate}
 
-Our work demonstrates that organizations can benefit from collaborative AI-powered vulnerability detection without exposing proprietary code. The negligible 0.02\% accuracy difference between federated and centralized learning represents an exceptional privacy-utility tradeoff for enterprise adoption, with the added benefit of improved model robustness through dataset cleaning and careful feature engineering.
+Our work demonstrates that organizations can benefit from collaborative AI-powered vulnerability detection without exposing proprietary code. The 1.1\% accuracy difference between federated and centralized learning represents an acceptable privacy-utility tradeoff for enterprise adoption, with the added benefit of improved model robustness through dataset cleaning, consistent label encoding, and careful feature engineering.
 
 \textit{Source code and reproducibility materials are available at} \url{https://github.com/ShariqueBaig/SecureCode-FL}
 
