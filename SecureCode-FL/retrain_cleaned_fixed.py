@@ -24,7 +24,7 @@ df = pd.read_csv('data/expanded_dataset_v2.csv')
 print(f"\n✓ Loaded cleaned dataset: {len(df)} samples")
 
 # Map labels correctly: 'Good'=1 (secure), 'Error'=0 (vulnerable)
-label_map = {'Good': 1, 'Error': 0}
+label_map = {'Error': 1, 'Good': 0}  # Error=1 (Vulnerable), Good=0 (Secure)
 y = df['Result'].map(label_map).values
 
 print(f"\nDataset composition:")

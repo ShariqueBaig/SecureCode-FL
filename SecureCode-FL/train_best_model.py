@@ -58,7 +58,7 @@ def load_expanded_dataset():
     print(f"\nLoaded expanded dataset: {len(df)} samples")
     
     # Clean labels
-    df['Result'] = df['Result'].map({'Error': 0, 'Good': 1})
+    df['Result'] = df['Result'].map({'Error': 1, 'Good': 0})  # Error=1 (Vulnerable), Good=0 (Secure)
     
     # Basic dataset info
     print(f"\nDataset composition:")

@@ -31,7 +31,7 @@ def test_xai_explainer():
     
     # Load model
     print("\n[1] Loading model and vectorizer...")
-    model_path = "models/neural_networks/cleaned_model_20251212_192709.keras"
+    model_path = "models/neural_networks/cleaned_model_20251213_203049.keras"  # Retrained with correct labels
     vectorizer_path = "models/tfidf_vectorizer.pkl"
     
     if not os.path.exists(model_path):
@@ -52,7 +52,7 @@ def test_xai_explainer():
     import pandas as pd
     # Load dataset
     df = pd.read_csv('data/expanded_dataset_v2.csv')
-    label_map = {'Good': 1, 'Error': 0}
+    label_map = {'Good': 0, 'Error': 1}  # Error=1 (Vulnerable), Good=0 (Secure)
     y_all = df['Result'].map(label_map).values
     # Load saved indices
     split = joblib.load('models/train_test_indices.pkl')
@@ -81,7 +81,7 @@ def test_xai_explainer():
     print("\n[5] Testing explanations on VULNERABLE samples...")
     print("-" * 70)
     
-    vulnerable_mask = (y_test == 1)  # Fixed: 1 = vulnerable, 0 = secure
+    vulnerable_mask = (y_test == 1)  # 1 = Error = Vulnerable
     vulnerable_indices = np.where(vulnerable_mask)[0][:3]  # First 3 vulnerable
     
     vulnerable_explanations = []
@@ -103,7 +103,7 @@ def test_xai_explainer():
     print("\n[6] Testing explanations on SECURE samples...")
     print("-" * 70)
     
-    secure_mask = (y_test == 0)
+    secure_mask = (y_test == 0)  # 0 = Good = Secure
     secure_indices = np.where(secure_mask)[0][:3]  # First 3 secure
     
     secure_explanations = []
