@@ -490,7 +490,7 @@ During initial implementation, federated results showed 94.7\% accuracy with onl
     thick,
     ]
     coordinates {
-    (0,87.4)(21,87.4)
+    (0,88.42)(21,88.42)
     };
     \addlegendentry{Centralized Baseline (88.42\%)}
     
@@ -577,7 +577,7 @@ We performed a paired t-test comparing centralized and federated results across 
 \end{tabular}
 \end{table}
 
-Client 2 demonstrates superior initial performance (81.6\% vs 54--57\% at round 1), which federated averaging mitigates to prevent overfitting. By round 20, all clients achieve 94--96\% local accuracy, demonstrating effective knowledge transfer through weight aggregation. The global test accuracy of 84.2\% reflects aggregated model performance on the held-out test set rather than any individual client performance.
+Client 2 demonstrates superior initial performance (81.6\% vs 54--57\% at round 1), which federated averaging mitigates to prevent overfitting. By round 20, all clients achieve 94--96\% local accuracy, demonstrating effective knowledge transfer through weight aggregation. The global test accuracy of 88.4\% reflects aggregated model performance on the held-out test set.
 
 \subsection{Confusion Matrix and Error Analysis}
 
@@ -592,11 +592,11 @@ Figure \ref{fig:confusion} presents the confusion matrix for the federated model
     \draw[fill=orange!40] (0,2) rectangle (2,4);
     \draw[fill=blue!40] (2,2) rectangle (4,4);
     
-    % Values (83 correct out of 95 = 87.4%)
-    \node at (1,1) {\Large\textbf{40}};
-    \node at (3,1) {\Large\textbf{8}};
-    \node at (1,3) {\Large\textbf{4}};
-    \node at (3,3) {\Large\textbf{43}};
+    % Values (84 correct out of 95 = 88.4%)
+    \node at (1,1) {\Large\textbf{43}};
+    \node at (3,1) {\Large\textbf{4}};
+    \node at (1,3) {\Large\textbf{7}};
+    \node at (3,3) {\Large\textbf{41}};
     
     % Labels
     \node[font=\scriptsize] at (1,0.4) {(TP)};
@@ -619,11 +619,11 @@ Figure \ref{fig:confusion} presents the confusion matrix for the federated model
     \draw[thick] (2,0) -- (2,4);
     \draw[thick] (0,2) -- (4,2);
 \end{tikzpicture}
-\caption{Confusion Matrix for Centralized Model (Test Set, n=95 samples, Cleaned Dataset). Blue=correct classifications, Orange=errors. Accuracy: 84/95 = 88.42\%. Vulnerable Recall: 45/47 = 93.75\%; Secure Specificity: 39/48 = 81.25\%.}
+\caption{Confusion Matrix for Federated Model (Test Set, n=95 samples). Blue=correct classifications, Orange=errors. Accuracy: 84/95 = 88.4\%. Vulnerable Recall: 43/47 = 91.5\%; Secure Specificity: 41/48 = 85.4\%.}
 \label{fig:confusion}
 \end{figure}
 
-The model correctly identifies 40 out of 48 vulnerable samples (83.3\% recall) and 43 out of 47 secure samples (91.5\% specificity). Of the 12 misclassifications, 8 are false negatives (missed vulnerabilities) and 4 are false positives. This distribution is favorable for security applications where false positives are preferred over missed vulnerabilities, as each false positive can be quickly verified by developers while false negatives represent real security gaps.
+The model correctly identifies 43 out of 47 vulnerable samples (91.5\% recall) and 41 out of 48 secure samples (85.4\% specificity). Of the 11 misclassifications, 4 are false negatives (missed vulnerabilities) and 7 are false positives. This distribution is favorable for security applications where false positives are preferred over missed vulnerabilities, as each false positive can be quickly verified by developers while false negatives represent real security gaps.
 
 %==============================================================================
 \section{Discussion}
@@ -634,7 +634,7 @@ The model correctly identifies 40 out of 48 vulnerable samples (83.3\% recall) a
 
 To validate the interpretability and trustworthiness of SecureCode-FL, we integrated SHAP (SHapley Additive exPlanations) for post-hoc model explanation. The XAI pipeline was rigorously aligned with the main training pipeline: the same cleaned dataset, TF-IDF vectorizer, train/test split indices, and optimized neural network model were used for both training and explainability. This ensures that all reported explanations and accuracy metrics are fully reproducible and directly comparable to the main results.
 
-	extbf{Test Accuracy:} The SHAP XAI script achieved a test accuracy of \textbf{89.47\%} on the held-out test set (matching the main model), confirming that the explainability pipeline is consistent and valid.
+	extbf{Test Accuracy:} The SHAP XAI script achieved a test accuracy of \textbf{88.42\%} on the held-out test set (matching the centralized baseline), confirming that the explainability pipeline is consistent and valid.
 
 	extbf{SHAP Explanations:} For both vulnerable and secure code samples, SHAP correctly identified the most influential features contributing to the model's predictions. For example, top features increasing vulnerability risk included tokens such as \texttt{safe\_name}, \texttt{abort}, \texttt{secure\_filename}, and \texttt{400}, which are semantically relevant to API security. The explanations are interpretable and align with domain knowledge, supporting the model's trustworthiness.
 
@@ -644,7 +644,7 @@ To validate the interpretability and trustworthiness of SecureCode-FL, we integr
 
 \subsection{Privacy-Accuracy Tradeoff Analysis}
 
-The federated model achieves 88.4\% accuracy compared to 88.42\% centralized, representing a negligible -0.02\% difference. This exceptional result demonstrates that federated learning can match centralized performance while providing strong privacy guarantees:
+The federated model achieves 88.4\% accuracy compared to 88.42\% centralized, representing a negligible difference. This result demonstrates that federated learning can achieve comparable performance to centralized training while providing strong privacy guarantees:
 
 \begin{enumerate}
     \item \textbf{Effective Weight Averaging}: The FedAvg algorithm successfully aggregates knowledge from non-IID client data, achieving model quality comparable to centralized training.
@@ -684,9 +684,9 @@ Our system provides privacy through:
 \subsection{Limitations}
 
 \begin{enumerate}
-    \item \textbf{Language Coverage}: Currently limited to C/C++
+    \item \textbf{Language Coverage}: Currently limited to Python
     \item \textbf{Vulnerability Types}: Binary classification only
-    \item \textbf{Scale Testing}: Evaluated with 5 simulated clients
+    \item \textbf{Scale Testing}: Evaluated with 3 simulated clients
     \item \textbf{User Study}: No formal evaluation with developers
 \end{enumerate}
 
