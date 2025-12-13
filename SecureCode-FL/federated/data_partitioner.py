@@ -38,8 +38,8 @@ class DataPartitioner:
         csv_path = os.path.join(DATA_DIR, "expanded_dataset_v2.csv")
         self.df = pd.read_csv(csv_path)
         
-        # Convert labels to match main training: Good = 1 (secure), Error = 0 (vulnerable)
-        self.df['label'] = self.df['Result'].map({'Good': 1, 'Error': 0})
+        # FIXED: Match main training encoding: Error = 1 (Vulnerable), Good = 0 (Secure)
+        self.df['label'] = self.df['Result'].map({'Error': 1, 'Good': 0})
         
         print(f"Loaded dataset: {len(self.df)} samples")
         print(f"Vulnerability types: {self.df['Primary Vulnerability'].nunique()}")
@@ -78,8 +78,8 @@ class DataPartitioner:
                 'y_train': client_y,
                 'num_samples': len(client_y),
                 'class_distribution': {
-                    'vulnerable': int((client_y == 0).sum()),
-                    'secure': int((client_y == 1).sum())
+                    'vulnerable': int((client_y == 1).sum()),
+                    'secure': int((client_y == 0).sum())
                 }
             })
             
@@ -140,8 +140,8 @@ class DataPartitioner:
                 'num_samples': len(client_y),
                 'vulnerability_types': client_vuln_mapping[i],
                 'class_distribution': {
-                    'vulnerable': int((client_y == 0).sum()),
-                    'secure': int((client_y == 1).sum())
+                    'vulnerable': int((client_y == 1).sum()),
+                    'secure': int((client_y == 0).sum())
                 }
             })
         
@@ -159,7 +159,7 @@ class DataPartitioner:
         
         print(f"\nFeature shape: {X.shape}")
         print(f"Total samples: {len(y)}")
-        print(f"Vulnerable: {(y == 0).sum()}, Secure: {(y == 1).sum()}")
+        print(f"Vulnerable: {(y == 1).sum()}, Secure: {(y == 0).sum()}")
         
         # Partition based on distribution type
         if self.distribution == 'iid':
