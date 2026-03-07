@@ -1,8 +1,0 @@
-Method,Dataset,Accuracy (%),Privacy,Model Size
-VulDeePecker (2018),NVD/SARD,87.3,None,~10M
-Devign (2019),Devign,56.0,None,~1M
-LineVul (2022),Big-Vul,91.2,None,125M
-CodeBERT (2023),Various,89.5,None,125M
-GPT-4 Zero-shot (2024),Various,72.1,API calls,~1T
-SecureCode-FL (Ours),OWASP API,85.3 ± 2.1,FL (local),267K
-SecureCode-FL + DP (Ours),OWASP API,55.8,ε=60 DP,267K
