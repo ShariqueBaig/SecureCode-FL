@@ -1,0 +1,160 @@
+{
+  "name": "securecode-fl",
+  "displayName": "SecureCode-FL: AI Vulnerability Detector",
+  "description": "Real-time code vulnerability detection powered by Federated Learning",
+  "version": "1.0.0",
+  "publisher": "SecureCodeFL",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "vulnerability",
+    "owasp",
+    "machine learning",
+    "federated learning",
+    "code analysis"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:java",
+    "onLanguage:csharp",
+    "onLanguage:php"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "securecode-fl.scanFile",
+        "title": "SecureCode-FL: Scan Current File"
+      },
+      {
+        "command": "securecode-fl.scanWorkspace",
+        "title": "SecureCode-FL: Scan Entire Workspace"
+      },
+      {
+        "command": "securecode-fl.toggleRealTime",
+        "title": "SecureCode-FL: Toggle Real-Time Scanning"
+      },
+      {
+        "command": "securecode-fl.showDashboard",
+        "title": "SecureCode-FL: Show Vulnerability Dashboard"
+      },
+      {
+        "command": "securecode-fl.markFalsePositive",
+        "title": "SecureCode-FL: Mark Selection as False Positive"
+      },
+      {
+        "command": "securecode-fl.markVulnerable",
+        "title": "SecureCode-FL: Mark Selection as Vulnerable"
+      },
+      {
+        "command": "securecode-fl.confirmVulnerability",
+        "title": "SecureCode-FL: Confirm Vulnerability at Cursor"
+      },
+      {
+        "command": "securecode-fl.showFeedbackStats",
+        "title": "SecureCode-FL: Show Feedback Statistics"
+      }
+    ],
+    "configuration": {
+      "title": "SecureCode-FL",
+      "properties": {
+        "securecode-fl.enableRealTimeScanning": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time vulnerability scanning as you type"
+        },
+        "securecode-fl.scanDelay": {
+          "type": "number",
+          "default": 1000,
+          "description": "Delay in milliseconds before scanning after typing stops"
+        },
+        "securecode-fl.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:5000",
+          "description": "URL of the SecureCode-FL inference server"
+        },
+        "securecode-fl.minimumConfidence": {
+          "type": "number",
+          "default": 0.7,
+          "description": "Minimum confidence threshold (0-1) to show vulnerabilities"
+        },
+        "securecode-fl.showInlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline vulnerability hints"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "securecode-fl.scanFile",
+          "group": "securecode-fl@1",
+          "when": "editorLangId =~ /python|javascript|typescript|java|csharp|php/"
+        },
+        {
+          "command": "securecode-fl.markFalsePositive",
+          "group": "securecode-fl@2",
+          "when": "editorHasSelection && editorLangId =~ /python|javascript|typescript|java|csharp|php/"
+        },
+        {
+          "command": "securecode-fl.markVulnerable",
+          "group": "securecode-fl@3",
+          "when": "editorHasSelection && editorLangId =~ /python|javascript|typescript|java|csharp|php/"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "securecode-fl.markFalsePositive",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "securecode-fl.markVulnerable",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "securecode-fl.scanFile",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ShariqueBaig/SecureCode-FL"
+  }
+}

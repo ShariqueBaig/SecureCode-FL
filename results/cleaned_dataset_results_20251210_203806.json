@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-12-10T20:38:07.044716",
+  "dataset": "expanded_dataset_v2_cleaned",
+  "data_cleaning": {
+    "label_leaking_features_removed": true,
+    "vulnerable_api_renamed": true,
+    "secure_api_renamed": true,
+    "samples_cleaned": 12
+  },
+  "test_metrics": {
+    "accuracy": 0.8842105263157894,
+    "precision": 0.8490566037735849,
+    "recall": 0.9375,
+    "f1": 0.8910891089108911
+  },
+  "cv_metrics": {
+    "accuracy_mean": 0.9254385964912281,
+    "accuracy_std": 0.016410778012166373,
+    "precision_mean": 0.9209401709401709,
+    "recall_mean": 0.9288124156545209,
+    "f1_mean": 0.9248251748251747
+  },
+  "confusion_matrix": {
+    "tn": 39,
+    "fp": 8,
+    "fn": 3,
+    "tp": 45
+  },
+  "model_params": 267393,
+  "training_set_size": 376,
+  "test_set_size": 95,
+  "comparison_to_original": {
+    "original_test_accuracy": 0.874,
+    "cleaned_test_accuracy": 0.8842105263157894,
+    "difference": 0.010210526315789448
+  }
+}

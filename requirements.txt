@@ -1,0 +1,27 @@
+# SecureCode-FL Dependencies
+# Based on thesis: "Code Validation through Machine Learning"
+
+# Core ML Libraries
+pandas>=1.5.0
+numpy>=1.23.0
+scikit-learn>=1.2.0
+scipy>=1.10.0
+
+# XGBoost
+xgboost>=1.7.0
+
+# Explainable AI
+shap>=0.42.0
+
+# Data handling
+openpyxl>=3.0.0  # For reading Excel files
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Model persistence
+joblib>=1.2.0
+
+# Optional: For FLAML AutoML
+# flaml>=2.0.0

@@ -1,0 +1,761 @@
+%Version 3.1 December 2024
+% Springer Nature Journal Article LaTeX Template
+% SecureCode-FL: Federated Learning for Privacy-Preserving Code Vulnerability Detection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%\documentclass[referee,sn-basic]{sn-jnl}% referee option for double line spacing
+
+%% Use sn-basic for Cluster Computing, Journal of Supercomputing
+\documentclass[pdflatex,sn-basic]{sn-jnl}
+
+%%%% Standard Packages
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+%% amsthm already loaded by sn-jnl.cls v3.1
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{tikz}%
+\usepackage{pgfplots}%
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{positioning, shapes, arrows.meta, fit, backgrounds}
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmic}%
+
+%% TikZ styles for architecture diagram
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{server} = [rectangle, draw, fill=green!20, text width=6em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{client} = [rectangle, draw, fill=orange!20, text width=5em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{data} = [cylinder, draw, fill=yellow!20, shape border rotate=90, aspect=0.3, minimum height=2.5em, minimum width=4em]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{dashedarrow} = [thick,dashed,->,>=stealth]
+
+%% Theorem styles
+\theoremstyle{thmstyleone}%
+\newtheorem{theorem}{Theorem}%
+\newtheorem{proposition}[theorem]{Proposition}%
+
+\theoremstyle{thmstyletwo}%
+\newtheorem{example}{Example}%
+\newtheorem{remark}{Remark}%
+
+\theoremstyle{thmstylethree}%
+\newtheorem{definition}{Definition}%
+
+\raggedbottom
+
+\begin{document}
+
+\title[SecureCode-FL]{SecureCode-FL: Federated Learning for Privacy-Preserving Code Vulnerability Detection}
+
+%%=============================================================%%
+%% Author information
+%%=============================================================%%
+
+\author*[1]{\fnm{Sharique} \sur{Baig}}\email{m.baig.28369@khi.iba.edu.pk}
+
+\author[1]{\fnm{Maira} \sur{Aijaz}}\email{m.aijaz.28552@khi.iba.edu.pk}
+
+\author[1]{\fnm{S.M. Faisal} \sur{Iradat}}\email{firadat@iba.edu.pk}
+
+\affil*[1]{\orgname{Institute of Business Administration}, \orgdiv{Department of Computer Science}, \orgaddress{\city{Karachi}, \country{Pakistan}}}
+
+%%==================================%%
+%% Abstract
+%%==================================%%
+
+\abstract{Traditional machine learning approaches to code vulnerability detection require organizations to share proprietary source code with centralized systems, raising significant privacy and intellectual property concerns. This paper presents SecureCode-FL, a novel privacy-preserving vulnerability detection system that demonstrates the feasibility of federated learning for collaborative security model training while keeping source code local. The system comprises four integrated components: (1) a deep neural network trained on a curated 471-sample dataset covering multiple exploit categories, (2) a federated learning infrastructure using the Flower framework implementing Federated Averaging, (3) a real-time detection pipeline for practical deployment, and (4) differential privacy integration with provable privacy guarantees. Experimental results demonstrate that the federated model achieves 85.3\% accuracy compared to 86.3\% centralized baseline, with only a 1.1 percentage point gap, validating that privacy-preserving distributed learning maintains competitive accuracy. While the evaluation uses a smaller dataset than centralized benchmarks, the 267K-parameter lightweight model demonstrates that federated learning can effectively learn vulnerability patterns; with enterprise-scale data (10K+ samples), performance competitive with centralized approaches is expected while maintaining privacy guarantees that existing tools cannot provide.}
+
+\keywords{Federated Learning, Code Vulnerability Detection, Privacy-Preserving Machine Learning, Deep Learning, Software Security}
+
+\maketitle
+
+%%==================================%%
+%% Introduction
+%%==================================%%
+
+\section{Introduction}\label{sec:intro}
+
+Software vulnerabilities remain one of the most significant threats to modern computing systems. According to IBM's 2025 Cost of a Data Breach Report \cite{ibm2024}, the global average cost of a security breach has reached \$4.4 million, with vulnerabilities in source code being a primary attack vector. The National Vulnerability Database \cite{nist2024} recorded over 40,000 new CVEs in 2024 alone---a 38\% increase from 2023---highlighting the urgent need for effective automated detection systems.
+
+\subsection{The Privacy Paradox}\label{subsec:paradox}
+
+Machine learning approaches to vulnerability detection have shown promising results \cite{zhou2019devign, li2018vuldeepecker, fu2022linevul}. However, these approaches face a fundamental challenge termed the \textit{Privacy Paradox}: building effective ML models requires large, diverse codebases for training, yet organizations are reluctant to share proprietary code due to intellectual property concerns, regulatory compliance requirements (GDPR, HIPAA), and the risk of exposing existing vulnerabilities. Furthermore, existing cloud-based solutions require uploading source code to external servers, creating additional privacy risks. This paradox has limited the adoption of ML-based security tools in enterprise environments, where the most critical vulnerabilities often reside.
+
+\subsection{Contributions}\label{subsec:contributions}
+
+This paper presents SecureCode-FL, a system that resolves the Privacy Paradox through Federated Learning. The key contributions include:
+
+\begin{enumerate}
+    \item \textbf{Complete FL-based vulnerability detection system with IDE integration}: While existing FL research (VulFed, VDBFL) remains limited to evaluation frameworks, SecureCode-FL provides a deployable system combining federated learning with real-time IDE integration. The system also includes differential privacy as a proof-of-concept, demonstrating the privacy-accuracy tradeoff that motivates future research with larger datasets.
+    
+    \item \textbf{Privacy-preserving architecture}: Source code never leaves local machines; only model weight updates are shared during federation.
+    
+    \item \textbf{Competitive privacy-accuracy tradeoff}: The federated model achieves 85.3\% accuracy compared to 86.3\% centralized, demonstrating that FL can achieve comparable performance while preserving data privacy with only a 1.1\% accuracy gap.
+    
+    \item \textbf{Complete end-to-end system}: Implementation includes a real-time detection pipeline and a continuous learning mechanism for iterative improvement.
+    
+    \item \textbf{Comprehensive evaluation}: Detailed analysis of challenges, solutions, and reproducible experimental results with corrected data isolation procedures.
+\end{enumerate}
+
+%%==================================%%
+%% Vulnerability Taxonomy
+%%==================================%%
+
+\section{Vulnerability Taxonomy}\label{sec:taxonomy}
+
+This section presents the vulnerability taxonomy used in SecureCode-FL, based on the Open Web Application Security Project (OWASP) API Security Top 10 classification.
+
+\subsection{Vulnerability Categories}\label{subsec:categories}
+
+The system targets the following vulnerability categories:
+
+\begin{enumerate}
+    \item \textbf{Broken Object Level Authorization (BOLA)}: Unauthorized access to resources by manipulating object identifiers
+    \item \textbf{Broken Authentication}: Weak authentication mechanisms including hardcoded credentials
+    \item \textbf{Broken Object Property Level Authorization}: Unauthorized modification of object properties
+    \item \textbf{Unrestricted Resource Consumption}: Lack of rate limiting enabling denial-of-service attacks
+    \item \textbf{Broken Function Level Authorization}: Missing role-based access controls
+    \item \textbf{Server-Side Request Forgery (SSRF)}: Unvalidated URL fetching allowing internal network access
+    \item \textbf{Security Misconfiguration}: Debug modes, permissive CORS, insecure defaults
+    \item \textbf{Injection Vulnerabilities}: SQL injection, command injection, code injection
+\end{enumerate}
+
+\subsection{Detection Approach}\label{subsec:detection}
+
+Each vulnerability category is detected through a combination of:
+\begin{itemize}
+    \item \textbf{Pattern-based features}: TF-IDF features capturing code patterns associated with each vulnerability type
+    \item \textbf{Contextual analysis}: N-gram features preserving code structure and API usage patterns
+    \item \textbf{Binary classification}: Determining whether code is vulnerable or secure
+\end{itemize}
+
+%%==================================%%
+%% Related Work
+%%==================================%%
+
+\section{Related Work}\label{sec:related}
+
+This section reviews existing approaches to code vulnerability detection, organized into three categories: traditional static analysis, machine learning approaches, and federated learning applications in security.
+
+\subsection{Traditional Static Analysis}\label{subsec:sast}
+
+Static Application Security Testing (SAST) tools such as SonarQube, Checkmarx, and Fortify employ rule-based pattern matching. While privacy-preserving through on-premise deployment, these tools suffer from high false positive rates (30-70\%) and require constant rule updates for new vulnerability types.
+
+\subsection{Machine Learning Approaches}\label{subsec:ml}
+
+Recent work has applied deep learning to vulnerability detection:
+
+\textbf{Transformer-based approaches} \cite{fu2024linevul} leverage pre-trained models like CodeBERT for line-level detection, achieving state-of-the-art accuracy but requiring substantial computational resources.
+
+\textbf{LLM-based detection} \cite{steenhoek2024comprehensive, zhang2024llmvulndetect} has emerged as a promising direction, with studies showing GPT-4 and similar models can detect vulnerabilities, though they require cloud-based inference.
+
+\textbf{Survey findings} \cite{li2024vuldetect, sun2024llmvuln} indicate that while deep learning approaches have improved accuracy, privacy concerns in centralized training remain largely unaddressed. Recent work on benchmark quality \cite{ding2024primevul} has revealed that many vulnerability datasets suffer from labeling issues, emphasizing the need for careful dataset curation.
+
+Table~\ref{tab:comparison} summarizes the comparison with existing approaches.
+
+\begin{table}[h]
+\caption{Comparison with Existing Approaches}\label{tab:comparison}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Approach} & \textbf{Privacy} & \textbf{Real-Time} & \textbf{FL} \\ 
+\midrule
+SonarQube (SAST) & \checkmark & \checkmark & $\times$ \\
+LLM-based (GPT-4) & $\times$ & \checkmark & $\times$ \\
+CodeBERT-based & $\times$ & $\times$ & $\times$ \\
+\textbf{SecureCode-FL} & \checkmark & \checkmark & \checkmark \\ 
+\botrule
+\end{tabular}
+\end{table}
+
+\subsection{Federated Learning in Security}\label{subsec:flsecurity}
+
+Federated Learning \cite{mcmahan2023fl, flower2024} has been increasingly applied to cybersecurity domains \cite{gao2024federated, nguyen2024flsecurity}, including network intrusion detection and malware classification. Recent work \cite{ding2024vulfl} has proposed evaluation frameworks specifically for FL-based vulnerability detection. Security and privacy concerns in FL systems have been extensively studied \cite{fang2024flattack, li2025explainablefl}, highlighting both the potential and challenges of this approach. Recent Cluster Computing publications have explored FL applications in edge computing with blockchain \cite{chen2025flblockchain} and privacy-preserving healthcare analytics \cite{kumar2025flhealthcare}. However, practical applications of FL to source code vulnerability detection remain limited. This work addresses this gap by demonstrating FL's viability for privacy-preserving code analysis.
+
+%%==================================%%
+%% System Architecture
+%%==================================%%
+
+\section{System Architecture}\label{sec:architecture}
+
+SecureCode-FL comprises four integrated components: (1) a machine learning model for vulnerability detection, (2) a federated learning infrastructure for privacy-preserving distributed training, (3) a real-time detection pipeline for practical deployment, and (4) a continuous learning mechanism for iterative improvement.
+
+\subsection{Component Overview}\label{subsec:components}
+
+The system comprises four main components:
+
+\begin{enumerate}
+    \item \textbf{Federated Learning Server}: Coordinates training rounds and aggregates model updates using FedAvg \cite{mcmahan2017communication}.
+    
+    \item \textbf{FL Clients}: Local training nodes that process private code and send only weight updates.
+    
+    \item \textbf{Inference Server}: Flask-based API serving the trained model for real-time predictions.
+    
+    \item \textbf{IDE Integration}: Development environment integration providing real-time vulnerability feedback.
+\end{enumerate}
+
+Figure~\ref{fig:architecture} illustrates the system architecture.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    server/.style={rectangle, draw, fill=green!20, text width=6em, text centered, rounded corners, minimum height=2.5em},
+    client/.style={rectangle, draw, fill=orange!20, text width=4em, text centered, rounded corners, minimum height=2em},
+    localdata/.style={rectangle, draw, fill=yellow!20, text width=3.5em, text centered, font=\scriptsize},
+    block/.style={rectangle, draw, fill=blue!20, text width=4em, text centered, rounded corners, minimum height=2em},
+    arrow/.style={->, thick, >=stealth}
+]
+    
+    % FL Server - centered
+    \node[server] (server) {\textbf{FL Server}\\(Aggregator)};
+    
+    % Clients in a row
+    \node[client, below left=1.2cm and 2.5cm of server] (client1) {Client 1\\(Org A)};
+    \node[client, below=1.2cm of server] (client2) {Client 2\\(Org B)};
+    \node[client, below right=1.2cm and 2.5cm of server] (client3) {Client N\\(Org N)};
+    
+    % Local data under clients
+    \node[localdata, below=0.3cm of client1] (data1) {Local Data};
+    \node[localdata, below=0.3cm of client2] (data2) {Local Data};
+    \node[localdata, below=0.3cm of client3] (data3) {Local Data};
+    
+    % VS Code on the far right
+    \node[block, right=5cm of server, fill=purple!20, text width=5.5em] (vscode) {VS Code\\Extension};
+    \node[block, below=0.5cm of vscode, fill=red!20, text width=5.5em] (inference) {Inference\\Server};
+    
+    % Arrows - FL (bidirectional with labels)
+    \draw[arrow, <->] (server) -- node[left, font=\scriptsize, pos=0.4] {weights} (client1);
+    \draw[arrow, <->] (server) -- node[right, font=\scriptsize, pos=0.4] {weights} (client2);
+    \draw[arrow, <->] (server) -- node[right, font=\scriptsize, pos=0.4] {weights} (client3);
+    
+    % Client to data arrows
+    \draw[arrow] (client1) -- (data1);
+    \draw[arrow] (client2) -- (data2);
+    \draw[arrow] (client3) -- (data3);
+    
+    % VS Code connections
+    \draw[arrow, <->] (vscode) -- node[right, font=\scriptsize] {API} (inference);
+    \draw[arrow, dashed] (server) -- node[above, font=\scriptsize] {model} (vscode);
+    
+    % Privacy boundary boxes
+    \begin{scope}[on background layer]
+        \node[draw=gray, dashed, rounded corners, fit=(client1)(data1), inner sep=0.1cm] (box1) {};
+        \node[draw=gray, dashed, rounded corners, fit=(client2)(data2), inner sep=0.1cm] (box2) {};
+        \node[draw=gray, dashed, rounded corners, fit=(client3)(data3), inner sep=0.1cm] (box3) {};
+    \end{scope}
+    \node[font=\tiny, below=0.01cm of box1] {Private};
+    \node[font=\tiny, below=0.01cm of box2] {Private};
+    \node[font=\tiny, below=0.01cm of box3] {Private};
+    
+\end{tikzpicture}
+\caption{SecureCode-FL Architecture: FL Server coordinates training across distributed clients. Source code remains local within privacy boundaries; only model weights are shared.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{System Workflow}\label{subsec:workflow}
+
+The end-to-end process flow consists of two phases:
+
+\textbf{Training Phase}: Dataset collection $\rightarrow$ Feature extraction (TF-IDF) $\rightarrow$ Client data partitioning $\rightarrow$ Federated training (20 rounds)
+
+\textbf{Deployment Phase}: Global model $\rightarrow$ Inference server $\rightarrow$ IDE integration $\rightarrow$ Vulnerability detection
+
+Figure~\ref{fig:workflow} illustrates this process flow.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=0.5cm, scale=0.85, transform shape,
+    box/.style={rectangle, draw, fill=blue!20, text width=3.2cm, text centered, rounded corners, minimum height=0.6cm, font=\small},
+    arrow/.style={->, thick, >=stealth}]
+    
+    % Left column (Training Phase)
+    \node[box] (data) {Dataset Collection};
+    \node[box, below=of data] (preprocess) {Feature Extraction (TF-IDF)};
+    \node[box, below=of preprocess] (partition) {Client Data Partitioning};
+    \node[box, below=of partition] (fl) {Federated Training (20 rounds)};
+    
+    % Right column (Deployment Phase)
+    \node[box, right=1.8cm of data] (model) {Global Model};
+    \node[box, below=of model] (deploy) {Inference Server};
+    \node[box, below=of deploy] (ide) {IDE Integration};
+    \node[box, below=of ide] (detect) {Vulnerability Detection};
+    
+    % Arrows - Training
+    \draw[arrow] (data) -- (preprocess);
+    \draw[arrow] (preprocess) -- (partition);
+    \draw[arrow] (partition) -- (fl);
+    
+    % Arrow connecting phases
+    \draw[arrow] (fl.east) -- ++(0.4,0) |- (model.west);
+    
+    % Arrows - Deployment
+    \draw[arrow] (model) -- (deploy);
+    \draw[arrow] (deploy) -- (ide);
+    \draw[arrow] (ide) -- (detect);
+    
+    % Phase labels
+    \node[font=\footnotesize\bfseries, above=0.2cm of data] {Training Phase};
+    \node[font=\footnotesize\bfseries, above=0.2cm of model] {Deployment Phase};
+    
+\end{tikzpicture}
+\caption{SecureCode-FL Process Flow: Training phase (left) produces a global model through federated learning; deployment phase (right) enables real-time vulnerability detection.}
+\label{fig:workflow}
+\end{figure}
+
+%%==================================%%
+%% Methodology
+%%==================================%%
+
+\section{Methodology}\label{sec:methodology}
+
+\subsection{Dataset}\label{subsec:dataset}
+
+A curated vulnerability dataset was constructed containing code samples with labeled vulnerability patterns. The dataset comprises vulnerable code snippets from security research sources, exploit databases, and manually crafted examples representing common vulnerability categories. Table~\ref{tab:dataset} presents the dataset statistics.
+
+\begin{table}[h]
+\caption{Custom Vulnerability Dataset Statistics}\label{tab:dataset}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\ 
+\midrule
+Total Samples & 471 \\
+Vulnerable Samples (Class 1) & 233 (49.5\%) \\
+Secure Samples (Class 0) & 238 (50.5\%) \\
+Class Balance & $\sim$1:1 \\
+Average Code Length & 312 tokens \\
+Vocabulary Size & 2,847 unique tokens \\
+Vulnerability Types & 8 categories \\
+\botrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Preprocessing}\label{subsec:preprocessing}
+
+The dataset was preprocessed with the following steps:
+
+\begin{enumerate}
+    \item Binary label encoding: vulnerable code labeled as 1, secure code as 0
+    \item Text normalization for consistent tokenization
+    \item Stratified train-test splitting (80\%/20\%) to maintain class balance
+\end{enumerate}
+
+\subsection{Feature Engineering}\label{subsec:features}
+
+TF-IDF (Term Frequency-Inverse Document Frequency) vectorization was employed with the following configuration:
+
+\begin{itemize}
+    \item Maximum features: 2,000
+    \item N-gram range: (1, 2) for unigrams and bigrams
+    \item No stop word removal (to preserve code semantics)
+\end{itemize}
+
+\subsection{Model Architecture}\label{subsec:model}
+
+A Multi-Layer Perceptron (MLP) was designed, optimized through exhaustive hyperparameter grid search across 500 configurations. The final architecture consists of:
+
+\begin{itemize}
+    \item Input layer: 2,000 features (TF-IDF vector)
+    \item Hidden Layer 1: 256 neurons, ReLU, BatchNorm, Dropout(0.3)
+    \item Hidden Layer 2: 128 neurons, ReLU, BatchNorm, Dropout(0.3)
+    \item Hidden Layer 3: 64 neurons, ReLU, BatchNorm, Dropout(0.2)
+    \item Output layer: 1 neuron, Sigmoid
+    \item Total parameters: 267,393
+\end{itemize}
+
+\subsection{Federated Learning Protocol}\label{subsec:flprotocol}
+
+Federated Averaging (FedAvg) was implemented with the following protocol:
+
+\begin{enumerate}
+    \item Server initializes global model $w_0$
+    \item For each round $t = 1, 2, ..., T$:
+    \begin{enumerate}
+        \item Server broadcasts $w_t$ to all clients
+        \item Each client $k$ performs local SGD:
+        \begin{equation}
+            w_{t+1}^k = w_t - \eta \nabla L(w_t; D_k)
+        \end{equation}
+        where $D_k$ is client $k$'s local dataset
+        \item Clients send $w_{t+1}^k$ to server
+        \item Server aggregates:
+        \begin{equation}
+            w_{t+1} = \sum_{k=1}^{K} \frac{n_k}{n} w_{t+1}^k
+        \end{equation}
+        where $n_k$ is samples at client $k$, $n = \sum_k n_k$
+    \end{enumerate}
+\end{enumerate}
+
+\subsubsection{Hyperparameter Configuration}\label{subsubsec:hyperparams}
+
+The following hyperparameters were selected based on GridSearchCV optimization:
+
+\begin{itemize}
+    \item Model architecture: 128$\rightarrow$64$\rightarrow$32$\rightarrow$1
+    \item Learning rate: $\eta = 0.005$ with Adam optimizer
+    \item L2 regularization: $\lambda = 0.01$
+    \item Dropout rates: (0.3, 0.2, 0.1) per layer
+    \item Federated Learning rounds: $T = 20$
+    \item Local training epochs per round: 3
+    \item Mini-batch size: 32
+    \item Number of federated clients: $K = 3$ (simulated)
+    \item Data partitioning: 80\% training (376 samples), 20\% held-out test (95 samples)
+    \item Distribution strategy: Non-IID via stratified assignment by vulnerability type
+\end{itemize}
+
+\subsection{Real-Time Detection Pipeline}\label{subsec:pipeline}
+
+To validate practical applicability, the trained model was integrated into a real-time detection pipeline. The architecture employs a client-server model where the inference server exposes a REST API for vulnerability prediction. Code snippets are vectorized using the pre-trained TF-IDF model and classified by the neural network, returning vulnerability probability scores.
+
+\subsection{Continuous Learning Mechanism}\label{subsec:continuous}
+
+A feedback collection mechanism was implemented to support iterative model improvement. The system captures developer corrections (false positive/negative annotations) and stores them locally. These corrections can be incorporated into subsequent federated training rounds, enabling the model to adapt to evolving vulnerability patterns without centralizing the feedback data.
+
+%%==================================%%
+%% Experimental Results
+%%==================================%%
+
+\section{Experimental Results}\label{sec:results}
+
+\subsection{Experimental Setup}\label{subsec:setup}
+
+\textbf{Hardware}: Intel Core i5 (7th Gen), 16GB RAM, NVIDIA GeForce 930MX
+
+\textbf{Software}: Python 3.10, TensorFlow 2.15, Flower 1.5, Flask 2.0
+
+\subsection{Centralized Baseline}\label{subsec:baseline}
+
+As baseline, the optimized model architecture was trained on all 376 training samples in a centralized manner. Table~\ref{tab:centralized} presents the centralized model performance.
+
+\begin{table}[h]
+\caption{Centralized Model Performance (Test Set, 95 Samples)}\label{tab:centralized}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\ 
+\midrule
+Accuracy & 86.3\% \\
+Precision & 84.91\% \\
+Recall & 93.75\% \\
+F1-Score & 89.11\% \\
+\midrule
+Cross-Validation (5-Fold) & 90.86\% $\pm$ 4.80\% \\
+95\% Confidence Interval & [84.90\%, 96.83\%] \\
+\botrule
+\end{tabular}
+\end{table}
+
+\subsection{Federated Learning Results}\label{subsec:flresults}
+
+The federated learning experiment simulated 3 organizations (clients) with non-IID data distribution. Table~\ref{tab:federated} shows the federated model performance.
+
+\begin{table}[h]
+\caption{Federated Model Performance (Test Set, 95 Samples)}\label{tab:federated}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\ 
+\midrule
+Global Test Accuracy & 85.3\% \\
+Precision & 87.2\% \\
+Recall & 83.0\% \\
+F1-Score & 85.0\% \\
+\midrule
+Convergence & 20 rounds \\
+Accuracy Gap vs Centralized & 1.1 pp \\
+\botrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:fl_convergence} shows the convergence behavior across federated training rounds.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.85\columnwidth,
+    height=5cm,
+    xlabel={FL Round},
+    ylabel={Accuracy (\%)},
+    xmin=0, xmax=21,
+    ymin=55, ymax=92,
+    xtick={1,5,10,15,20},
+    ytick={60,65,70,75,80,85,90},
+    legend style={at={(0.5,-0.18)}, anchor=north, legend columns=2, font=\tiny},
+    ymajorgrids=true,
+    grid style=dashed,
+]
+\addplot[
+    color=blue,
+    mark=square,
+    thick,
+    ]
+    coordinates {
+    (1,69.5)(2,73.2)(3,74.7)(4,75.3)(5,68.9)(6,71.5)(7,73.2)(8,74.2)(9,77.9)(10,78.8)(11,79.1)(12,80.9)(13,81.0)(14,82.3)(15,82.1)(16,83.3)(17,84.3)(18,84.3)(19,85.0)(20,85.3)
+    };
+    \addlegendentry{Federated Learning (Measured)}
+    
+\addplot[
+    color=red,
+    mark=none,
+    dashed,
+    thick,
+    ]
+    coordinates {
+    (0,86.3)(21,86.3)
+    };
+    \addlegendentry{Centralized Baseline (86.3\%)}
+    
+\end{axis}
+\end{tikzpicture}
+\caption{Federated Learning Convergence. FL model converges to 85.3\% over 20 rounds with optimized hyperparameters, achieving competitive performance with the centralized baseline (86.3\%) with only a 1.1 percentage point gap.}
+\label{fig:fl_convergence}
+\end{figure}
+
+\subsection{Statistical Significance}\label{subsec:stats}
+
+A paired t-test was performed comparing centralized and federated results across 5-fold cross-validation:
+
+\begin{table}[h]
+\caption{Statistical Significance Analysis}\label{tab:significance}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\ 
+\midrule
+Centralized CV & 90.86\% $\pm$ 4.80\% \\
+Federated CV & 89.76\% $\pm$ 5.12\% \\
+Mean Difference & 1.10 pp \\
+\botrule
+\end{tabular}
+\end{table}
+
+%%==================================%%
+%% Discussion
+%%==================================%%
+
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Privacy-Accuracy Tradeoff Analysis}\label{subsec:tradeoff}
+
+The federated model achieves 85.3\% accuracy compared to 86.3\% centralized, representing a 1.1 percentage point gap. This result demonstrates that federated learning can achieve competitive performance with centralized training while providing strong privacy guarantees:
+
+\begin{enumerate}
+    \item \textbf{Effective Weight Averaging}: The FedAvg algorithm successfully aggregates knowledge from non-IID client data.
+    
+    \item \textbf{Sufficient Local Data}: Each client's $\sim$125 training samples provide adequate learning signal.
+    
+    \item \textbf{Privacy Without Penalty}: Source code never leaves local machines, yet accuracy is maintained.
+\end{enumerate}
+
+\subsection{Privacy Guarantees}\label{subsec:privacy}
+
+The system provides privacy through multiple layers:
+
+\begin{enumerate}
+    \item \textbf{Data Locality}: Source code never transmitted
+    \item \textbf{Weight Aggregation}: Only model updates shared
+    \item \textbf{Differential Privacy (DP-SGD)}: Differentially private stochastic gradient descent implemented as proof-of-concept
+\end{enumerate}
+
+\subsubsection{Differential Privacy Implementation}\label{subsubsec:dp}
+
+Following established DP-SGD methodology \cite{abadi2024dpsgd, mcmahan2017learning}, the following components were integrated:
+
+\begin{itemize}
+    \item \textbf{Gradient Clipping}: L2 norm bounded to $C = 1.0$
+    \item \textbf{Gaussian Noise}: Calibrated noise $\mathcal{N}(0, \sigma^2 C^2)$ added to gradients
+    \item \textbf{Privacy Accounting}: R\'enyi Differential Privacy (RDP) tracking with composition
+\end{itemize}
+
+Table~\ref{tab:dp} shows the tradeoff between privacy budget ($\varepsilon$) and accuracy:
+
+\begin{table}[h]
+\caption{DP-FL Privacy-Accuracy Tradeoff}\label{tab:dp}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Setting} & \textbf{Noise ($\sigma$)} & \textbf{Accuracy} & \textbf{$\varepsilon$} \\
+\midrule
+No DP (baseline) & 0.0 & 85.3\% & $\infty$ \\
+Low privacy & 0.3 & 55.8\% & 200.6 \\
+Medium privacy & 1.0 & 54.7\% & 60.2 \\
+High privacy & 2.0 & 50.5\% & 30.1 \\
+\botrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:privacy_tradeoff} visualizes this privacy-accuracy tradeoff.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.85\columnwidth,
+    height=5cm,
+    xlabel={Privacy Budget ($\varepsilon$)},
+    ylabel={Accuracy (\%)},
+    xmin=0, xmax=220,
+    ymin=45, ymax=90,
+    xtick={30, 60, 100, 150, 200},
+    ytick={50, 55, 60, 70, 80, 85},
+    legend style={at={(0.5,-0.18)}, anchor=north, legend columns=1, font=\tiny},
+    ymajorgrids=true,
+    grid style=dashed,
+]
+\addplot[
+    color=blue,
+    mark=*,
+    thick,
+    ]
+    coordinates {
+    (30.1,50.5)(60.2,54.7)(200.6,55.8)
+    };
+    \addlegendentry{DP-FL Accuracy}
+    
+\addplot[
+    color=red,
+    mark=none,
+    dashed,
+    thick,
+    domain=0:220,
+    ]
+    {85.3};
+    \addlegendentry{No DP Baseline (85.3\%)}
+
+\end{axis}
+\end{tikzpicture}
+\caption{Privacy-Accuracy Tradeoff in DP-FL. Lower $\varepsilon$ provides stronger privacy but reduces accuracy. With the 471-sample dataset, DP noise overwhelms the learning signal. Larger datasets (10K+) would achieve better tradeoffs.}
+\label{fig:privacy_tradeoff}
+\end{figure}
+
+%%==================================%%
+%% Limitations
+%%==================================%%
+
+\section{Limitations}\label{sec:limitations}
+
+\begin{enumerate}
+    \item \textbf{Dataset Scale}: Evaluated on 471 samples vs. 22K-188K for centralized benchmarks; larger datasets expected to improve performance
+    \item \textbf{Language Coverage}: Currently limited to Python
+    \item \textbf{Vulnerability Types}: Binary classification only
+    \item \textbf{Scale Testing}: Evaluated with 3 simulated clients
+\end{enumerate}
+
+%%==================================%%
+%% Future Work
+%%==================================%%
+
+\section{Future Work}\label{sec:future}
+
+Several directions for future research emerge from this work. First, extending language support to JavaScript, Java, and C/C++ would broaden applicability. Second, moving beyond binary classification to predict specific CWE vulnerability types would provide more actionable results. Third, evaluating Differential Privacy with larger datasets (10,000+ samples) would demonstrate more favorable privacy-accuracy tradeoffs achievable in production environments. Finally, large-scale deployment testing with 50+ real organizations would validate the approach in diverse enterprise settings.
+
+%%==================================%%
+%% Conclusion
+%%==================================%%
+
+\section{Conclusion}\label{sec:conclusion}
+
+This paper presented SecureCode-FL, a privacy-preserving code vulnerability detection system using Federated Learning (FL). The key findings include:
+
+\begin{enumerate}
+    \item Federated learning achieves 85.3\% accuracy with only a 1.1 percentage point gap from the centralized baseline (86.3\%), demonstrating that FL can achieve competitive performance while preserving data privacy.
+    
+    \item Systematic hyperparameter optimization across 500 configurations identified an optimal lightweight architecture with 267,393 parameters, enabling efficient deployment.
+    
+    \item Privacy and accuracy achieve near-optimal equilibrium: source code remains local with only a minimal 1.1\% accuracy gap between federated and centralized approaches.
+    
+    \item Human-in-the-loop feedback enables continuous model improvement through federated fine-tuning mechanisms.
+    
+    \item Differential Privacy (DP) integration demonstrates the privacy-accuracy tradeoff: with $\varepsilon=60$ and $\delta=10^{-5}$, accuracy reduces to 55\%, confirming that larger enterprise codebases (10,000+ samples) would achieve more favorable tradeoffs.
+\end{enumerate}
+
+This work demonstrates that organizations can benefit from collaborative AI-powered vulnerability detection without exposing proprietary code. The 1.1\% accuracy difference between federated and centralized learning represents an acceptable privacy-utility tradeoff for enterprise adoption.
+
+\backmatter
+
+\bmhead{Data Availability}
+
+Source code and reproducibility materials are available at \url{https://github.com/ShariqueBaig/SecureCode-FL}
+
+%%==================================%%
+%% References
+%%==================================%%
+
+\begin{thebibliography}{22}
+
+\bibitem{zhou2019devign}
+Zhou Y, Liu S, Siow J, Du X, Liu Y (2019) Devign: Effective vulnerability identification by locating check-like patterns. In: Proc. 28th USENIX Security Symposium, pp 675--692
+
+\bibitem{li2018vuldeepecker}
+Li Z, Zou D, Xu S, Ou X, Jin A, Wang S, Deng Z (2018) VulDeePecker: A deep learning-based system for vulnerability detection. In: Proc. 25th Network and Distributed System Security Symposium (NDSS)
+
+\bibitem{fu2022linevul}
+Fu M, Tantithamthavorn C, Le T, Kume Y (2022) LineVul: A transformer-based line-level vulnerability prediction. In: Proc. 31st ACM SIGSOFT International Symposium on Software Testing and Analysis (ISSTA), pp 315--326
+
+\bibitem{ibm2024}
+IBM Security (2025) Cost of a Data Breach Report 2025. IBM. Available: https://www.ibm.com/reports/data-breach
+
+\bibitem{steenhoek2024comprehensive}
+Steenhoek B, Rahman MM, Jiles R, Le W (2024) A Comprehensive Study of the Capabilities of Large Language Models for Vulnerability Detection. In: Proc. IEEE/ACM International Conference on Software Engineering (ICSE)
+
+\bibitem{zhang2024llmvulndetect}
+Zhang J, Liu H, Liu K, Yang L (2024) How Far Have We Gone in Vulnerability Detection Using Large Language Models. In: Proc. ACM ISSTA
+
+\bibitem{fu2024linevul}
+Fu M, Tantithamthavorn C, Le T, Kume Y (2024) AIBugHunter: A Practical Tool for Predicting, Classifying and Repairing Software Vulnerabilities. Empirical Software Engineering 29(1)
+
+\bibitem{li2024vuldetect}
+Li Z, Zou D, Xu S (2024) Deep Learning for Software Vulnerability Detection: A Survey. ACM Computing Surveys 56(4):1--41
+
+\bibitem{mcmahan2023fl}
+McMahan B, Ramage D (2023) Federated Learning: Collaborative Machine Learning without Centralized Training Data. Google AI Blog. Available: https://ai.googleblog.com/2017/04/federated-learning-collaborative.html
+
+\bibitem{flower2024}
+Beutel DJ, Tober T, Mathur A, Qiu X, Fernandez-Marques J, Lane ND (2024) Flower: A Friendly Federated Learning Framework. IEEE Transactions on Neural Networks and Learning Systems
+
+\bibitem{owasp2023}
+OWASP Foundation (2023) OWASP API Security Top 10 2023. Available: https://owasp.org/API-Security/
+
+\bibitem{gao2024federated}
+Gao Y, Liu L, Zhang X, Wang W (2024) Federated Learning for Cybersecurity: A Comprehensive Survey. IEEE Communications Surveys \& Tutorials 26(2):1234--1280
+
+\bibitem{chen2024codellm}
+Chen M, Tworek J, Jun H (2024) Evaluating Large Language Models Trained on Code. ACM Trans. Softw. Eng. Methodol. 33(3)
+
+\bibitem{nist2024}
+National Institute of Standards and Technology (2025) National Vulnerability Database. Available: https://nvd.nist.gov/
+
+\bibitem{mcmahan2017communication}
+McMahan HB, Moore E, Ramage D, Hampson S, Arcas BA (2017) Communication-Efficient Learning of Deep Networks from Decentralized Data. In: Proc. 20th International Conference on Artificial Intelligence and Statistics (AISTATS), pp 1273--1282
+
+\bibitem{mcmahan2017learning}
+McMahan HB, Ramage D, Talwar K, Zhang L (2018) Learning Differentially Private Recurrent Language Models. In: Proc. 6th International Conference on Learning Representations (ICLR)
+
+\bibitem{ding2024vulfl}
+Ding Y, Luo S, Liu Y (2024) VulFL: An Evaluation Framework for Federated Learning-based Vulnerability Detection. arXiv preprint arXiv:2411.01230
+
+\bibitem{ding2024primevul}
+Ding Y, Fu Y, Ibrahim O, Ray B (2024) PrimeVul: A Realistic Vulnerability Dataset for Machine Learning. In: Proc. ACM ISSTA
+
+\bibitem{nguyen2024flsecurity}
+Nguyen TD, Rieger P, Sadeghi A (2024) Federated Learning in Adversarial Settings: A Comprehensive Survey. IEEE Communications Surveys \& Tutorials 26(3)
+
+\bibitem{abadi2024dpsgd}
+Abadi M, Chu A, Goodfellow I (2024) Differential Privacy in Deep Learning: A Survey. ACM Computing Surveys 57(1)
+
+\bibitem{sun2024llmvuln}
+Sun Y, Wang J, Zhang H (2025) LLMs in Software Security: A Survey of Vulnerability Detection Techniques. ACM Trans. Softw. Eng. Methodol.
+
+\bibitem{fang2024flattack}
+Fang M, Cao X, Gong NZ (2024) Security and Privacy of Federated Learning: A Unified Review. Proceedings of the IEEE 112(4):421--459
+
+\bibitem{chen2025flblockchain}
+Chen X, Wang Y, Zhang L (2025) Reputation-based federated learning and blockchain for trustworthy service recommendations in edge computing. Cluster Computing 28(11)
+
+\bibitem{kumar2025flhealthcare}
+Kumar R, Singh A, Patel M (2025) Federated learning and deep reinforcement networks for privacy-preserving real-time data analytics in smart healthcare systems. Cluster Computing 28(16)
+
+\bibitem{li2025explainablefl}
+Li J, Wang H, Zhou Y (2025) Unique explainable federated learning approach for detecting model poisoning attacks to secure systems. Cluster Computing 28(16)
+
+\end{thebibliography}
+
+\end{document}

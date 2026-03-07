@@ -1,0 +1,111 @@
+{
+    "checkpoint_id": 2,
+    "checkpoint_name": "Neural Network Conversion",
+    "date": "2025-12-02",
+    "status": "COMPLETED",
+    
+    "goal": "Convert tree-based models to FL-compatible neural networks",
+    
+    "why_neural_networks": "Federated Learning requires gradient-based models. Tree-based models (Random Forest, Extra Trees) cannot be mathematically averaged using FedAvg algorithm.",
+    
+    "architectures_tested": [
+        {
+            "name": "MLP",
+            "type": "Multi-Layer Perceptron",
+            "input": "TF-IDF (1000 features)",
+            "layers": ["Dense(256)", "BatchNorm", "Dropout(0.3)", "Dense(128)", "BatchNorm", "Dropout(0.3)", "Dense(64)", "Dropout(0.2)", "Dense(32)", "Dense(1)"],
+            "accuracy": 0.533,
+            "std": 0.163,
+            "fold_scores": [0.50, 0.50, 0.33, 0.50, 0.83]
+        },
+        {
+            "name": "MLP_Small",
+            "type": "Lightweight MLP for edge",
+            "input": "TF-IDF (1000 features)",
+            "layers": ["Dense(128)", "Dropout(0.3)", "Dense(64)", "Dropout(0.2)", "Dense(32)", "Dense(1)"],
+            "accuracy": 0.550,
+            "std": 0.194,
+            "fold_scores": [0.50, 0.50, 0.33, 0.50, 0.92]
+        },
+        {
+            "name": "LSTM",
+            "type": "Long Short-Term Memory",
+            "input": "Token sequences (150 length, 562 vocab)",
+            "layers": ["Embedding(562, 128)", "LSTM(64)", "Dropout(0.3)", "LSTM(32)", "Dropout(0.3)", "Dense(32)", "Dense(1)"],
+            "accuracy": 0.633,
+            "std": 0.100,
+            "fold_scores": [0.50, 0.75, 0.58, 0.75, 0.58]
+        },
+        {
+            "name": "BiLSTM",
+            "type": "Bidirectional LSTM",
+            "input": "Token sequences (150 length, 562 vocab)",
+            "layers": ["Embedding(562, 128)", "BiLSTM(64)", "Dropout(0.3)", "BiLSTM(32)", "Dropout(0.3)", "Dense(32)", "Dense(1)"],
+            "accuracy": 0.633,
+            "std": 0.100,
+            "fold_scores": [0.50, 0.75, 0.58, 0.75, 0.58]
+        },
+        {
+            "name": "CNN",
+            "type": "1D Convolutional Neural Network",
+            "input": "Token sequences (150 length, 562 vocab)",
+            "layers": ["Embedding(562, 128)", "Conv1D(64, 3)", "MaxPool(2)", "Conv1D(32, 3)", "MaxPool(2)", "Conv1D(16, 3)", "GlobalMaxPool", "Dense(64)", "Dropout(0.3)", "Dense(32)", "Dense(1)"],
+            "accuracy": 0.550,
+            "std": 0.113,
+            "fold_scores": [0.42, 0.50, 0.58, 0.75, 0.50]
+        }
+    ],
+    
+    "best_model": {
+        "name": "LSTM",
+        "accuracy": 0.633,
+        "std": 0.100,
+        "fl_compatible": true
+    },
+    
+    "comparison": {
+        "tree_based_baseline": {
+            "model": "Gradient Boosting",
+            "accuracy": 0.767,
+            "fl_compatible": false
+        },
+        "best_neural_network": {
+            "model": "LSTM",
+            "accuracy": 0.633,
+            "fl_compatible": true
+        },
+        "thesis_target": {
+            "model": "Extra Trees",
+            "accuracy": 0.833,
+            "fl_compatible": false
+        },
+        "accuracy_gap": -0.134
+    },
+    
+    "key_findings": [
+        "Neural networks need more data than 60 samples",
+        "LSTM captures code structure better than MLP",
+        "High variance (±10-20%) due to small dataset",
+        "Trade-off: FL compatibility vs accuracy"
+    ],
+    
+    "files_created": [
+        "neural_network_models.py",
+        "models/neural_networks/mlp_vulnerability_detector.keras",
+        "models/neural_networks/tokenizer.pkl",
+        "results/neural_network_results.csv"
+    ],
+    
+    "recommendations": {
+        "option_a": "Proceed with LSTM (63.3%) for FL implementation",
+        "option_b": "Expand dataset to 500-1000 samples first (RECOMMENDED)",
+        "option_c": "Use transfer learning with CodeBERT/CodeT5"
+    },
+    
+    "next_phase": {
+        "phase": 3,
+        "name": "Federated Learning Implementation",
+        "framework": "Flower (flwr)",
+        "algorithm": "FedAvg"
+    }
+}

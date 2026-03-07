@@ -1,0 +1,76 @@
+{
+  "timestamp": "20251210_164159",
+  "configuration": {
+    "architecture": [
+      128,
+      64,
+      32
+    ],
+    "learning_rate": 0.005,
+    "dropout_rates": [
+      0.3,
+      0.2,
+      0.1
+    ],
+    "l2_regularization": 0.01,
+    "epochs": 30,
+    "batch_size": 32,
+    "cv_folds": 3
+  },
+  "centralized_test_results": {
+    "accuracy": 0.8736842105263158,
+    "precision": 0.9090909090909091,
+    "recall": 0.8333333333333334,
+    "f1": 0.8695652173913043,
+    "confusion_matrix": {
+      "tn": 43,
+      "fp": 4,
+      "fn": 8,
+      "tp": 40
+    },
+    "test_samples": 95,
+    "total_parameters": 267265
+  },
+  "cross_validation_results": {
+    "accuracy": {
+      "mean": 0.8482751322751323,
+      "std": 0.06807763284626117,
+      "folds": [
+        0.8968253968253969,
+        0.896,
+        0.752
+      ]
+    },
+    "precision": {
+      "mean": 0.9297820823244551,
+      "std": 0.058346310159573284,
+      "folds": [
+        0.9322033898305084,
+        0.8571428571428571,
+        1.0
+      ]
+    },
+    "recall": {
+      "mean": 0.7732308201058201,
+      "std": 0.19139545596593688,
+      "folds": [
+        0.859375,
+        0.9523809523809523,
+        0.5079365079365079
+      ]
+    },
+    "f1": {
+      "mean": 0.8234162642378303,
+      "std": 0.10592624297394562,
+      "folds": [
+        0.8943089430894309,
+        0.9022556390977443,
+        0.6736842105263158
+      ]
+    }
+  },
+  "model_path": "D:\\Sharique\\sem 5\\CS\\Research again\\SecureCode-FL\\models\\neural_networks\\best_mlp_model_20251210_164159.keras",
+  "description": "Best MLP model from GridSearchCV (500 configurations)",
+  "architecture": "128\u219264\u219232",
+  "parameters": 267265
+}

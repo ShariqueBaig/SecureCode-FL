@@ -1,0 +1,6 @@
+# Inference Server Dependencies
+flask>=3.0.0
+flask-cors>=4.0.0
+tensorflow>=2.13.0
+numpy>=1.23.0
+joblib>=1.2.0
