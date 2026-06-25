@@ -57,9 +57,24 @@ SecureCode-FL/
 ├── cross_validation.py                # 5-fold stratified cross-validation
 ├── main.py                           # Full centralized pipeline (Steps 1-5 combined)
 ├── neural_network_models.py           # MLP, LSTM, CNN architectures for FL
-├── xai_analysis.py                    # SHAP-based explainability analysis
-├── xai_explainer.py                   # Explainable AI helper module
 ├── generate_paper_figures.py          # Generates all publication figures
+│
+├── experiments/                       # Miscellaneous tuning and timing scripts
+│   ├── hyperparameter_tuning.py
+│   ├── nn_hyperparameter_tuning.py
+│   ├── analyze_token_distribution.py
+│   ├── measure_timing.py
+│   └── train_best_model.py
+│
+├── xai/                               # Explainable AI standalone scripts
+│   ├── xai_analysis.py                # SHAP-based explainability analysis
+│   └── xai_explainer.py               # Explainable AI helper module
+│
+├── paper/                             # LaTeX paper sources and templates
+│   ├── sn-securecode-fl.tex           # Paper source (Springer Nature LaTeX)
+│   ├── sn-jnl.cls                     # Springer Nature journal class file
+│   ├── sn-basic.bst                   # Bibliography style
+│   └── sn-article-template/           # Original SN template (reference)
 │
 ├── federated/                         # Federated Learning subsystem
 │   ├── fl_config.py                   # FL hyperparameters (rounds, clients, DP settings)
@@ -77,6 +92,8 @@ SecureCode-FL/
 ├── inference_server/                  # Real-time detection API
 │   ├── server.py                      # Flask REST API server
 │   ├── feedback.py                    # SQLite feedback database
+│   ├── start_server.bat               # Windows startup script
+│   ├── start_server.ps1               # PowerShell startup script
 │   └── requirements.txt              # Server-specific dependencies
 │
 ├── vscode-extension/                  # VS Code IDE integration
@@ -93,11 +110,6 @@ SecureCode-FL/
 ├── checkpoints/                       # Research progress checkpoints
 ├── docs/                              # Project documentation (25 documents)
 ├── results/                           # Saved experiment results (JSON, CSV, PNG)
-│
-├── sn-securecode-fl.tex               # Paper source (Springer Nature LaTeX)
-├── sn-jnl.cls                         # Springer Nature journal class file
-├── sn-basic.bst                       # Bibliography style
-├── sn-article-template/               # Original SN template (reference)
 │
 ├── requirements.txt                   # Python dependencies
 └── README.md                          # This file
