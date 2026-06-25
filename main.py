@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import RESULTS_DIR, EXPECTED_RESULTS
 from data_preprocessing import DataPreprocessor
 from model_training import VulnerabilityDetectionModels
-from xai_analysis import ExplainableAI, SHAP_AVAILABLE
+from xai.xai_analysis import ExplainableAI, SHAP_AVAILABLE
 
 
 def print_header(title):
@@ -46,7 +46,7 @@ def validate_results(results, expected):
         if model_name in results:
             actual_accuracy = results[model_name]['accuracy']
             diff = abs(actual_accuracy - expected_accuracy)
-            status = "✓ PASS" if diff < 0.1 else "✗ DIFF"  # Allow 10% tolerance
+            status = "[V] PASS" if diff < 0.1 else "[X] DIFF"  # Allow 10% tolerance
             
             print(f"\n{model_name}:")
             print(f"  Expected: {expected_accuracy*100:.1f}%")
@@ -155,7 +155,7 @@ def main():
     print(summary.to_string(index=False))
     
     best_name, best_accuracy, best_model = models.get_best_model()
-    print(f"\n★ Best Model: {best_name} with {best_accuracy*100:.1f}% accuracy")
+    print(f"\n* Best Model: {best_name} with {best_accuracy*100:.1f}% accuracy")
     
     # =========================================================
     # STEP 4: VALIDATION

@@ -22,7 +22,7 @@ from collections import Counter
 # ── Configuration ──────────────────────────────────────────────
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-ORIGINAL_DATASET = DATA_DIR / "expanded_dataset_v2.csv"
+ORIGINAL_DATASET = DATA_DIR / "expanded_dataset.xlsx"
 GITHUB_MINED = DATA_DIR / "github_mined_samples.csv"
 BANDIT_SCANNED = DATA_DIR / "bandit_scanned_samples.csv"
 OUTPUT_FILE = DATA_DIR / "merged_dataset.csv"

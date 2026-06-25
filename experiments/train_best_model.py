@@ -51,10 +51,10 @@ def load_expanded_dataset():
     print(" LOADING EXPANDED DATASET")
     print("="*70)
     
-    data_dir = os.path.join(os.path.dirname(__file__), "data")
-    csv_path = os.path.join(data_dir, "expanded_dataset_v2.csv")
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+    excel_path = os.path.join(data_dir, "expanded_dataset.xlsx")
     
-    df = pd.read_csv(csv_path)
+    df = pd.read_excel(excel_path, engine='openpyxl')
     print(f"\nLoaded expanded dataset: {len(df)} samples")
     
     # Clean labels

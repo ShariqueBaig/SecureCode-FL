@@ -236,7 +236,7 @@ def main():
     
     # Best model
     best_name, best_accuracy, best_model = trainer.get_best_model()
-    print(f"\n★ Best Model: {best_name} with {best_accuracy*100:.1f}% accuracy")
+    print(f"\n* Best Model: {best_name} with {best_accuracy*100:.1f}% accuracy")
     
     # Save models
     trainer.save_models(vectorizer, feature_names)

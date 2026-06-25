@@ -1,0 +1,68 @@
+======================================================================
+VULNERABILITY DETECTION - THESIS VALIDATION REPORT
+Generated: 2026-06-25 17:32:01
+======================================================================
+
+1. DATASET INFORMATION
+----------------------------------------
+Total samples: 471
+Vulnerable samples: 233
+Secure samples: 238
+Number of vulnerability types: 11
+
+2. VULNERABILITY DISTRIBUTION
+----------------------------------------
+  Unsafe Consumption of APIs: 117
+  Security Misconfiguration: 108
+  Broken Object Level Authorization: 55
+  Broken Authentication: 49
+  Broken Function Level Authorization: 23
+  Unrestricted Access to Sensitive Business Flows: 23
+  Broken Object Property Level Authorization: 23
+  Server Side Request Forgery: 23
+  Improper Inventory Management: 22
+  Unrestricted Resource Consumption: 22
+  Broken Object Level Authorizatio: 6
+
+3. MODEL PERFORMANCE SUMMARY
+----------------------------------------
+
+Extra Trees:
+  Accuracy:  91.6%
+  Precision: 0.9756
+  Recall:    0.8511
+  F1-Score:  0.9091
+
+Random Forest:
+  Accuracy:  90.5%
+  Precision: 0.9524
+  Recall:    0.8511
+  F1-Score:  0.8989
+
+Gradient Boosting:
+  Accuracy:  90.5%
+  Precision: 0.9524
+  Recall:    0.8511
+  F1-Score:  0.8989
+
+SVM:
+  Accuracy:  81.1%
+  Precision: 0.8222
+  Recall:    0.7872
+  F1-Score:  0.8043
+
+Logistic Regression:
+  Accuracy:  80.0%
+  Precision: 0.8043
+  Recall:    0.7872
+  F1-Score:  0.7957
+
+4. BEST MODEL
+----------------------------------------
+Model: Extra Trees
+Accuracy: 91.6%
+
+5. THESIS VALIDATION
+----------------------------------------
+Expected best model: Extra Trees (83.3%)
+Actual best model: Extra Trees (91.6%)

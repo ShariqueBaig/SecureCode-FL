@@ -27,10 +27,10 @@ tf.random.set_seed(RANDOM_STATE)
 
 def load_expanded_dataset():
     """Load the expanded dataset"""
-    data_dir = os.path.join(os.path.dirname(__file__), "data")
-    csv_path = os.path.join(data_dir, "expanded_dataset_v2.csv")
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+    excel_path = os.path.join(data_dir, "expanded_dataset.xlsx")
     
-    df = pd.read_csv(csv_path)
+    df = pd.read_excel(excel_path, engine='openpyxl')
     print(f"Loaded expanded dataset: {len(df)} samples")
     
     # Clean labels

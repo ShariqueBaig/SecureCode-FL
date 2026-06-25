@@ -240,7 +240,6 @@ Generate all publication-quality figures (confusion matrix, FL convergence, priv
 python generate_paper_figures.py
 ```
 
-> **Note:** This script references `data/expanded_dataset_v2.csv`. If you only have `expanded_dataset.xlsx`, you may need to export it as CSV first, or modify line 40 in `generate_paper_figures.py` to point to the `.xlsx` file.
 
 **Output:** All figures saved to `figures/` directory as both `.png` (300 DPI) and `.pdf`.
 
@@ -379,7 +378,6 @@ Then open the `vscode-extension/` folder in VS Code and press **F5** to launch t
 | `ModuleNotFoundError: No module named 'tensorflow'` | Install TensorFlow: `pip install tensorflow>=2.15.0` |
 | `ModuleNotFoundError: No module named 'flwr'` | Install Flower: `pip install flwr>=1.5.0` |
 | `ModuleNotFoundError: No module named 'xgboost'` | Install XGBoost: `pip install xgboost>=1.7.0` (optional; script skips XGBoost if missing) |
-| `FileNotFoundError: expanded_dataset_v2.csv` | `generate_paper_figures.py` and `data_partitioner.py` reference a CSV version. Convert the `.xlsx` to CSV or update the file path in the script. |
 | CUDA/GPU errors | Set `CUDA_VISIBLE_DEVICES=""` to force CPU mode |
 | `PermissionError` on Windows | Run terminal as Administrator, or ensure `venv/` is writable |
 

@@ -177,7 +177,7 @@ A federated learning system for detecting code vulnerabilities while keeping you
 ### Before Running Code
 - [ ] Set up Python environment (`python venv`)
 - [ ] Install dependencies (`pip install -r requirements.txt`)
-- [ ] Check data file exists (`data/expanded_dataset_v2.csv`)
+- [ ] Check data file exists (`data/expanded_dataset.xlsx`)
 - [ ] Verify model paths in config.py
 
 ---

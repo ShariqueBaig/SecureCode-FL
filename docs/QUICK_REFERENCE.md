@@ -115,7 +115,7 @@ Mathematical check: 646 client samples ≠ 471 total dataset
 ```
 SecureCode-FL/
 ├── config.py ........................ Central configuration
-├── data/expanded_dataset_v2.csv .... Dataset: 471 samples
+├── data/expanded_dataset.xlsx .... Dataset: 471 samples
 ├── neural_network_models.py ........ Model architectures
 ├── federated/
 │   ├── fl_simulation.py ............ CORRECTED FL implementation
@@ -135,7 +135,7 @@ SecureCode-FL/
 ### If Working on Phase 3 (Federated Learning)
 ```bash
 # 1. Verify data integrity
-python -c "import pandas as pd; df=pd.read_csv('data/expanded_dataset_v2.csv'); print(f'Total: {len(df)}, Vulnerable: {(df[\"label\"]==1).sum()}')"
+python -c "import pandas as pd; df=pd.read_excel('data/expanded_dataset.xlsx'); print(f'Total: {len(df)}, Vulnerable: {(df[\"label\"]==1).sum()}')"
 
 # 2. Run FL simulation
 python federated/fl_simulation.py
