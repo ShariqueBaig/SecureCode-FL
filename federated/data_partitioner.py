@@ -35,8 +35,8 @@ class DataPartitioner:
         
     def load_data(self):
         """Load the expanded dataset"""
-        csv_path = os.path.join(DATA_DIR, "expanded_dataset_v2.csv")
-        self.df = pd.read_csv(csv_path)
+        dataset_path = os.path.join(DATA_DIR, "expanded_dataset.xlsx")
+        self.df = pd.read_excel(dataset_path, engine='openpyxl')
         
         # FIXED: Match main training encoding: Error = 1 (Vulnerable), Good = 0 (Secure)
         self.df['label'] = self.df['Result'].map({'Error': 1, 'Good': 0})

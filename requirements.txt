@@ -25,3 +25,11 @@ joblib>=1.2.0
 
 # Optional: For FLAML AutoML
 # flaml>=2.0.0
+
+# Federated Learning & Deep Learning
+tensorflow>=2.15.0
+flwr>=1.5.0
+
+# Inference Server API
+flask>=3.0.0
+flask-cors>=4.0.0

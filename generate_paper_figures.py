@@ -37,7 +37,7 @@ os.makedirs(FIGURES_DIR, exist_ok=True)
 
 def load_data():
     """Load the dataset."""
-    df = pd.read_csv('data/expanded_dataset_v2.csv')
+    df = pd.read_excel('data/expanded_dataset.xlsx', engine='openpyxl')
     df['Label'] = df['Result'].map({'Error': 1, 'Good': 0})
     return df
 
