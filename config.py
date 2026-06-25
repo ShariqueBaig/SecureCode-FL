@@ -10,7 +10,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(BASE_DIR)
 DATA_DIR = os.path.join(BASE_DIR, "data")
 # Use expanded dataset (471 samples) instead of original (60 samples)
-DATASET_PATH = os.path.join(DATA_DIR, "expanded_dataset_v2.csv")
+DATASET_PATH = os.path.join(DATA_DIR, "expanded_dataset.xlsx")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
 

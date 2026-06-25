@@ -35,11 +35,12 @@ class DataPreprocessor:
         print("LOADING DATASET (EXPANDED - 471 SAMPLES)")
         print("=" * 60)
         
-        # Load CSV (expanded dataset) instead of Excel (original 60 samples)
+        # Load dataset
         if self.dataset_path.endswith('.csv'):
             self.df = pd.read_csv(self.dataset_path)
         else:
-            self.df = pd.read_excel(self.dataset_path)
+            # Fallback to excel if it's an xlsx file
+            self.df = pd.read_excel(self.dataset_path, engine='openpyxl')
         
         # Keep only relevant columns
         relevant_cols = ['S.No', 'Primary Vulnerability', 'Exploit', 'Result', 'Code']
