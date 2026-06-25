@@ -331,13 +331,13 @@ class FederatedSimulator:
 def main():
     """Main entry point for FL simulation"""
     print("""
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║                                                                  ║
-    ║           SECURECODE-FL: FEDERATED LEARNING SIMULATION           ║
-    ║                                                                  ║
-    ║        Privacy-Preserving Code Vulnerability Detection           ║
-    ║                                                                  ║
-    ╚══════════════════════════════════════════════════════════════════╝
+    ====================================================================
+    |                                                                  |
+    |           SECURECODE-FL: FEDERATED LEARNING SIMULATION           |
+    |                                                                  |
+    |        Privacy-Preserving Code Vulnerability Detection           |
+    |                                                                  |
+    ====================================================================
     """)
     
     # Create and run simulator
@@ -354,16 +354,16 @@ def main():
     
     # Summary
     print(f"""
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║                      SIMULATION COMPLETE                         ║
-    ╠══════════════════════════════════════════════════════════════════╣
-    ║  Federated Accuracy:   {comparison['federated']*100:5.1f}%                              ║
-    ║  Centralized Accuracy: {comparison['centralized']*100:5.1f}%                              ║
-    ║  Difference:           {comparison['difference']*100:+5.1f}%                              ║
-    ╠══════════════════════════════════════════════════════════════════╣
-    ║  Privacy Preserved: ✓ Code never left client devices            ║
-    ║  Only model weights were shared                                  ║
-    ╚══════════════════════════════════════════════════════════════════╝
+    ====================================================================
+    |                      SIMULATION COMPLETE                         |
+    ====================================================================
+    |  Federated Accuracy:   {comparison['federated']*100:5.1f}%                              |
+    |  Centralized Accuracy: {comparison['centralized']*100:5.1f}%                              |
+    |  Difference:           {comparison['difference']*100:+5.1f}%                              |
+    ====================================================================
+    |  Privacy Preserved: [V] Code never left client devices           |
+    |  Only model weights were shared                                  |
+    ====================================================================
     """)
     
     return simulator

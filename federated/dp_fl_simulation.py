@@ -171,7 +171,7 @@ class DPFederatedSimulator:
             client_sizes.append(len(data['y_train']))
             client_accs.append(history['accuracy'][-1])
             
-            print(f"  Client {client_id}: acc={history['accuracy'][-1]:.4f}, ε={client_epsilon:.2f}")
+            print(f"  Client {client_id}: acc={history['accuracy'][-1]:.4f}, epsilon={client_epsilon:.2f}")
             
         # Aggregate weights
         aggregated_weights = fedavg_aggregate(client_weights, client_sizes)
@@ -188,7 +188,7 @@ class DPFederatedSimulator:
         self.history['total_epsilon'] += round_epsilon
         
         print(f"  Global accuracy: {global_acc:.4f}")
-        print(f"  Round ε: {round_epsilon:.2f}, Total ε: {self.history['total_epsilon']:.2f}")
+        print(f"  Round epsilon: {round_epsilon:.2f}, Total epsilon: {self.history['total_epsilon']:.2f}")
         
         return global_acc
         
@@ -214,8 +214,8 @@ class DPFederatedSimulator:
         print(f" SIMULATION COMPLETE")
         print(f"{'='*60}")
         print(f"  Final accuracy: {final_acc:.4f} ({final_acc*100:.2f}%)")
-        print(f"  Total ε spent: {total_eps:.2f}")
-        print(f"  δ: {DP_DELTA}")
+        print(f"  Total epsilon spent: {total_eps:.2f}")
+        print(f"  delta: {DP_DELTA}")
         print(f"{'='*60}")
         
         return final_acc, total_eps
@@ -292,10 +292,10 @@ def run_privacy_comparison():
     print("\n" + "="*70)
     print(" PRIVACY-ACCURACY TRADEOFF SUMMARY")
     print("="*70)
-    print(f"{'Setting':<20} {'Noise':<10} {'Accuracy':<12} {'ε (Privacy)':<10}")
+    print(f"{'Setting':<20} {'Noise':<10} {'Accuracy':<12} {'epsilon':<10}")
     print("-"*52)
     for r in results:
-        eps_str = f"{r['epsilon']:.2f}" if r['epsilon'] != float('inf') else "∞"
+        eps_str = f"{r['epsilon']:.2f}" if r['epsilon'] != float('inf') else "inf"
         print(f"{r['label']:<20} {r['noise_multiplier']:<10} {r['accuracy']*100:.2f}%{'':<6} {eps_str}")
         
     return results

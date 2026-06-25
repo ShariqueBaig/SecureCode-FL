@@ -39,7 +39,7 @@ This repository contains the source code, dataset, and experimental pipeline for
 
 SecureCode-FL demonstrates that federated learning is feasible for privacy-preserving code vulnerability detection. The system allows multiple organizations to cooperatively train detection models without exchanging proprietary source code. Four integrated components comprise the system: (1) a deep neural network trained on a 471-sample dataset covering OWASP API Top 10 vulnerability categories, (2) a federated learning infrastructure using the Flower framework, (3) a real-time detection pipeline with VS Code IDE integration, and (4) differential privacy integration for privacy-utility tradeoff analysis.
 
-**Key finding:** The federated model achieves **83.16% accuracy** compared to **84.21% centralized baseline** — only a 1.05 percentage point difference — while source code never leaves local machines.
+**Key finding:** The federated model achieves **85.3% accuracy** compared to **88.4% centralized baseline** — only a 3.1 percentage point difference — while source code never leaves local machines.
 
 ---
 
@@ -210,9 +210,9 @@ python federated/fl_simulation.py
 
 **Expected output:**
 ```
-Federated Accuracy:   ~83.2%
-Centralized Accuracy: ~84.2%
-Difference:           ~-1.0%
+Federated Accuracy:   ~85.3%
+Centralized Accuracy: ~88.4%
+Difference:           ~-3.1%
 ```
 
 **Expected runtime:** ~10-15 minutes on CPU; ~3-5 minutes with GPU
@@ -285,7 +285,7 @@ The curated dataset is located at `data/expanded_dataset.xlsx`.
 
 | Metric | Centralized | Federated (3 clients) | Difference |
 |---|---|---|---|
-| Accuracy | 84.21% | 83.16% | −1.05 pp |
+| Accuracy | 88.4% | 85.3% | −3.1 pp |
 | Precision | 90.00% | 82.50% | −7.50 pp |
 | Recall | 76.60% | 75.10% | −1.50 pp |
 | F1-Score | 82.76% | 78.60% | −4.16 pp |
@@ -294,15 +294,15 @@ The curated dataset is located at `data/expanded_dataset.xlsx`.
 
 | Metric | Value |
 |---|---|
-| CV Accuracy | 90.79% ± 2.15% |
-| 95% Confidence Interval | [86.58%, 95.00%] |
+| CV Accuracy | 88.53% ± 2.20% |
+| 95% Confidence Interval | [85.80%, 91.27%] |
 
 ### Differential Privacy Tradeoff (Table 8 in paper)
 
 | Privacy Budget (ε) | Accuracy |
 |---|---|
-| ∞ (No DP) | 83.16% |
-| 60.2 | 54.7% |
+| ∞ (No DP) | 85.3% |
+| 60.18 | 53.68% |
 | 30.1 | 50.5% |
 
 > **Note:** DP accuracy is limited by the small dataset size (471 samples). The paper discusses that larger datasets (10K+) are needed for practical privacy-accuracy tradeoffs.
