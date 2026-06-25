@@ -122,3 +122,9 @@ figures/
 *.tar.gz
 *.7z
 *.rar
+
+# ── Private Paper Files (Springer Nature) ──────────────────────────────────
+paper/
+sn-*.tex
+sn-*.cls
+sn-*.bst
