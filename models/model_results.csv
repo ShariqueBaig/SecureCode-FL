@@ -1,6 +1,0 @@
-Model,Accuracy,Precision,Recall,F1-Score,ROC-AUC
-Extra Trees,91.6%,0.9756,0.8511,0.9091,0.9889
-Random Forest,90.5%,0.9524,0.8511,0.8989,0.9532
-Gradient Boosting,90.5%,0.9524,0.8511,0.8989,0.9592
-SVM,81.1%,0.8222,0.7872,0.8043,0.9082
-Logistic Regression,80.0%,0.8043,0.7872,0.7957,0.8901

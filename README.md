@@ -66,16 +66,8 @@ SecureCode-FL/
 │   ├── measure_timing.py
 │   └── train_best_model.py
 │
-├── xai/                               # Explainable AI standalone scripts
-│   ├── xai_analysis.py                # SHAP-based explainability analysis
-│   └── xai_explainer.py               # Explainable AI helper module
-│
-├── paper/                             # LaTeX paper sources and templates
-│   ├── sn-securecode-fl.tex           # Paper source (Springer Nature LaTeX)
-│   ├── sn-jnl.cls                     # Springer Nature journal class file
-│   ├── sn-basic.bst                   # Bibliography style
-│   └── sn-article-template/           # Original SN template (reference)
-│
+
+
 ├── federated/                         # Federated Learning subsystem
 │   ├── fl_config.py                   # FL hyperparameters (rounds, clients, DP settings)
 │   ├── fl_model.py                    # Neural network model + FedAvg aggregation
@@ -107,8 +99,7 @@ SecureCode-FL/
 │   ├── clone_and_scan.py              # Clone repos and scan for vulns
 │   └── merge_datasets.py             # Merge scan results into dataset
 │
-├── checkpoints/                       # Research progress checkpoints
-├── docs/                              # Project documentation (25 documents)
+
 ├── results/                           # Saved experiment results (JSON, CSV, PNG)
 │
 ├── requirements.txt                   # Python dependencies
@@ -175,8 +166,7 @@ python main.py
 1. Loads and preprocesses `data/expanded_dataset.xlsx` (471 samples)
 2. Extracts TF-IDF features (1,000 features, unigram + bigram)
 3. Trains 6 classifiers, evaluates on the held-out 20% test set
-4. Runs SHAP explainability analysis
-5. Saves models to `models/` and results to `results/`
+4. Saves models to `models/` and results to `results/`
 
 **Expected output:** Validation report saved to `results/validation_report.txt`  
 **Expected runtime:** ~2 minutes on CPU
@@ -290,12 +280,7 @@ The curated dataset is located at `data/expanded_dataset.xlsx`.
 | Recall | 80.85% | 70.21% | −10.64 pp |
 | F1-Score | 85.39% | 77.65% | −7.74 pp |
 
-### 5-Fold Cross-Validation
 
-| Metric | Value |
-|---|---|
-| CV Accuracy | 89.50% ± 2.10% |
-| 95% Confidence Interval | [87.40%, 91.60%] |
 
 ### Differential Privacy Tradeoff (Table 8 in paper)
 
