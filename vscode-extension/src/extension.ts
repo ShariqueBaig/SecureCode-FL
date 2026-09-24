@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
     const codeActionProvider = new FeedbackCodeActionProvider(feedbackManager);
     context.subscriptions.push(
         vscode.languages.registerCodeActionsProvider(
-            ['python', 'javascript', 'typescript', 'java', 'csharp', 'php'],
+            ['python'],
             codeActionProvider,
             { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] }
         )
@@ -214,7 +214,7 @@ function updateStatusBar(text: string, tooltip: string) {
 }
 
 function isSupportedLanguage(document: vscode.TextDocument): boolean {
-    const supportedLanguages = ['python', 'javascript', 'typescript', 'java', 'csharp', 'php'];
+    const supportedLanguages = ['python'];
     return supportedLanguages.includes(document.languageId);
 }
 

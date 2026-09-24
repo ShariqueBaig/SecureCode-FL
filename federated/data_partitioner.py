@@ -11,6 +11,11 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 import os
+import sys
+
+# Add parent directory to path to import main project modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data_preprocessing import DataPreprocessor
 
 from fl_config import (
     DATA_DIR, NUM_CLIENTS, DATA_DISTRIBUTION, 
@@ -48,15 +53,16 @@ class DataPartitioner:
         return self.df
     
     def create_tfidf_features(self):
-        """Create TF-IDF features for all data"""
-        self.vectorizer = TfidfVectorizer(
-            max_features=TFIDF_MAX_FEATURES,
-            ngram_range=(1, 2),
-            stop_words=None
-        )
+        """Create TF-IDF features for all data using unified DataPreprocessor"""
+        preprocessor = DataPreprocessor()
+        # Override df so it uses the one loaded by DataPartitioner
+        preprocessor.df = self.df
         
-        X = self.vectorizer.fit_transform(self.df['Code'].values).toarray()
-        y = self.df['label'].values
+        # Extract features (which also saves the vectorizer now)
+        X = preprocessor.extract_features().toarray()
+        y = preprocessor.encode_labels()
+        
+        self.vectorizer = preprocessor.vectorizer
         
         return X, y
     

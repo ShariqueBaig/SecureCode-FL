@@ -39,7 +39,7 @@ This repository contains the source code, dataset, and experimental pipeline for
 
 SecureCode-FL demonstrates that federated learning is feasible for privacy-preserving code vulnerability detection. The system allows multiple organizations to cooperatively train detection models without exchanging proprietary source code. Four integrated components comprise the system: (1) a deep neural network trained on a 471-sample dataset covering OWASP API Top 10 vulnerability categories, (2) a federated learning infrastructure using the Flower framework, (3) a real-time detection pipeline with VS Code IDE integration, and (4) differential privacy integration for privacy-utility tradeoff analysis.
 
-**Key finding:** The federated model achieves **85.3% accuracy** compared to **88.4% centralized baseline** — only a 3.1 percentage point difference — while source code never leaves local machines.
+**Key finding:** The federated model achieves **80.00% accuracy** compared to **86.32% centralized baseline** — only a 6.32 percentage point difference — while source code never leaves local machines.
 
 ---
 
@@ -210,9 +210,9 @@ python federated/fl_simulation.py
 
 **Expected output:**
 ```
-Federated Accuracy:   ~85.3%
-Centralized Accuracy: ~88.4%
-Difference:           ~-3.1%
+Federated Accuracy:   ~80.0%
+Centralized Accuracy: ~86.3%
+Difference:           ~-6.3%
 ```
 
 **Expected runtime:** ~10-15 minutes on CPU; ~3-5 minutes with GPU
@@ -285,23 +285,23 @@ The curated dataset is located at `data/expanded_dataset.xlsx`.
 
 | Metric | Centralized | Federated (3 clients) | Difference |
 |---|---|---|---|
-| Accuracy | 88.4% | 85.3% | −3.1 pp |
-| Precision | 90.00% | 82.50% | −7.50 pp |
-| Recall | 76.60% | 75.10% | −1.50 pp |
-| F1-Score | 82.76% | 78.60% | −4.16 pp |
+| Accuracy | 86.32% | 80.00% | −6.32 pp |
+| Precision | 90.48% | 86.84% | −3.64 pp |
+| Recall | 80.85% | 70.21% | −10.64 pp |
+| F1-Score | 85.39% | 77.65% | −7.74 pp |
 
 ### 5-Fold Cross-Validation
 
 | Metric | Value |
 |---|---|
-| CV Accuracy | 88.53% ± 2.20% |
-| 95% Confidence Interval | [85.80%, 91.27%] |
+| CV Accuracy | 89.50% ± 2.10% |
+| 95% Confidence Interval | [87.40%, 91.60%] |
 
 ### Differential Privacy Tradeoff (Table 8 in paper)
 
 | Privacy Budget (ε) | Accuracy |
 |---|---|
-| ∞ (No DP) | 85.3% |
+| ∞ (No DP) | 80.00% |
 | 60.18 | 53.68% |
 | 30.1 | 50.5% |
 

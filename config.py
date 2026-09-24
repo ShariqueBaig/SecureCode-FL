@@ -24,7 +24,7 @@ TEST_SIZE = 0.2
 
 # TF-IDF Configuration (as per thesis methodology)
 TFIDF_CONFIG = {
-    'max_features': 1000,
+    'max_features': 2000,
     'ngram_range': (1, 2),
     'min_df': 1,
     'max_df': 0.95,

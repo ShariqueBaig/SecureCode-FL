@@ -11,6 +11,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import warnings
+import os
+import joblib
 warnings.filterwarnings('ignore')
 
 from config import DATASET_PATH, TFIDF_CONFIG, RANDOM_STATE, TEST_SIZE
@@ -102,6 +104,12 @@ class DataPreprocessor:
         
         print(f"TF-IDF Features extracted: {X.shape[1]}")
         print(f"Top 20 features: {list(self.feature_names[:20])}")
+        
+        # Save vectorizer
+        models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
+        os.makedirs(models_dir, exist_ok=True)
+        joblib.dump(self.vectorizer, os.path.join(models_dir, 'tfidf_vectorizer.pkl'))
+        print(f"Saved vectorizer to {os.path.join(models_dir, 'tfidf_vectorizer.pkl')}")
         
         return X
     

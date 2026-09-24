@@ -59,6 +59,7 @@ export interface FeedbackStats {
 export class ServerClient {
     private client: AxiosInstance;
     private isFirstRequest: boolean = true;
+    private scanAbortController: AbortController | null = null;
 
     constructor() {
         const serverUrl = vscode.workspace.getConfiguration('securecode-fl').get('serverUrl', 'http://localhost:5000');
@@ -82,6 +83,12 @@ export class ServerClient {
     }
 
     async scanCode(code: string, language: string, filename: string): Promise<ScanResponse> {
+        // Cancel previous request if one is still pending
+        if (this.scanAbortController) {
+            this.scanAbortController.abort();
+        }
+        this.scanAbortController = new AbortController();
+
         try {
             // First request may take longer due to TensorFlow initialization
             const timeout = this.isFirstRequest ? 90000 : 60000;
@@ -91,9 +98,16 @@ export class ServerClient {
                 code: code,
                 language: language,
                 filename: filename
-            }, { timeout });
+            }, { 
+                timeout,
+                signal: this.scanAbortController.signal 
+            });
             return response.data;
         } catch (error) {
+            if (axios.isCancel(error)) {
+                // Request was cancelled by a newer keystroke, return empty result to suppress error popups
+                return { success: false, vulnerabilities: [], scan_time_ms: 0, model_version: '' };
+            }
             if (axios.isAxiosError(error)) {
                 if (error.code === 'ECONNREFUSED') {
                     throw new Error('Cannot connect to SecureCode-FL server. Please ensure the server is running.');

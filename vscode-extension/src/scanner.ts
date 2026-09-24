@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import { ServerClient, VulnerabilityResult } from './serverClient';
 import { DiagnosticsManager } from './diagnostics';
+import * as crypto from 'crypto';
 
 export class VulnerabilityScanner {
     private serverClient: ServerClient;
@@ -309,13 +310,7 @@ export class VulnerabilityScanner {
     }
 
     private hashCode(str: string): string {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return hash.toString();
+        return crypto.createHash('sha256').update(str).digest('hex');
     }
 
     clearCache(): void {

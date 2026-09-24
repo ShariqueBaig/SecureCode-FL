@@ -1,0 +1,45 @@
+Note: Run on 23 Sep 2026
+======================================================================
+ FEDERATED MODEL EVALUATION - ACTUAL GROUND TRUTH
+======================================================================
+
+Explanation for previous 50% accuracy:
+The codebase has a massive flaw: the FL simulation uses `data_partitioner.py` which skips preprocessing (like removing whitespace) and fits a TF-IDF vectorizer that is NEVER saved. When evaluating normally with `data_preprocessing.py`, the vocabularies are misaligned, causing the model to guess randomly. By replicating the flawed preprocessing exactly, we recover the 85.26% accuracy.
+
+1. OVERALL CONFUSION MATRIX & METRICS
+----------------------------------------
+Confusion Matrix:
+[[46  2]
+ [12 35]]
+True Positives (Vulnerable): 35
+True Negatives (Secure): 46
+False Positives: 2
+False Negatives: 12
+
+Overall Accuracy: 85.26%
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.79      0.96      0.87        48
+           1       0.95      0.74      0.83        47
+
+    accuracy                           0.85        95
+   macro avg       0.87      0.85      0.85        95
+weighted avg       0.87      0.85      0.85        95
+
+
+2. PER-CATEGORY PERFORMANCE
+----------------------------------------
+Category                                           | Samples    | Accuracy   | Correct/Total
+------------------------------------------------------------------------------------------
+Unsafe Consumption of APIs                         | 26         | 73.08%     | 19/26
+Security Misconfiguration                          | 24         | 87.50%     | 21/24
+Broken Object Level Authorization                  | 13         | 100.00%    | 13/13
+Broken Authentication                              | 8          | 87.50%     | 7/8
+Broken Object Property Level Authorization         | 6          | 66.67%     | 4/6
+Improper Inventory Management                      | 5          | 100.00%    | 5/5
+Unrestricted Resource Consumption                  | 4          | 100.00%    | 4/4
+Unrestricted Access to Sensitive Business Flows    | 4          | 100.00%    | 4/4
+Broken Function Level Authorization                | 3          | 66.67%     | 2/3
+Server Side Request Forgery                        | 2          | 100.00%    | 2/2

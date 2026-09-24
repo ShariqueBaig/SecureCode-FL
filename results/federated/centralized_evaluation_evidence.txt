@@ -1,0 +1,21 @@
+======================================================================
+ CENTRALIZED MODEL EVALUATION - ACTUAL GROUND TRUTH
+======================================================================
+
+Evaluation on test set (20%, 95 samples).
+Centralized Accuracy: 86.31578947368421%
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.8302    0.9167    0.8713        48
+           1     0.9048    0.8085    0.8539        47
+
+    accuracy                         0.8632        95
+   macro avg     0.8675    0.8626    0.8626        95
+weighted avg     0.8671    0.8632    0.8627        95
+
+Federated vs Centralized Gap:
+Federated: 80.00%
+Centralized: 86.32%
+Difference: 6.32 percentage points

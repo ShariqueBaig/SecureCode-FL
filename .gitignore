@@ -128,3 +128,8 @@ paper/
 sn-*.tex
 sn-*.cls
 sn-*.bst
+
+# ── Documentation & AI generated content ───────────────────────────────────
+docs/
+checkpoints/
+tools/tools_description.md
